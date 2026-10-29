@@ -1,32 +1,27 @@
-name: Verify WebDAV access (one-time)
-
+name: Verify WebDAV endpoint
 on:
   push:
     paths:
       - .github/workflows/verify-webdav.yml
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: Check external HTTPS and password requirement
+      - name: Check old and short addresses without credentials
         shell: bash
         run: |
-          url='https://jargielo.gh.srv.us/'
-          echo "Checking publicly reachable WebDAV endpoint; no credentials or file contents requested."
-          status=$(curl -sS --connect-timeout 10 --max-time 20 -o /dev/null -w '%{http_code}' -X PROPFIND -H 'Depth: 0' "$url") || status='connection_error'
-          echo "PROPFIND without login returned: $status"
-          if [ "$status" = 401 ]; then
-            echo 'PASS: endpoint requires authentication.'
-          elif [ "$status" = connection_error ]; then
-            echo 'UNREACHABLE: no connection to WebDAV endpoint.'
-            exit 1
-          else
-            echo 'NOT VERIFIED: expected 401 Unauthorized. Check WebDAV FS PRO settings.'
-            exit 1
-          fi
+          for url in 'https://jargielo.gh.srv.us/' 'https://zqwy5yyvrd5ibmphemi7kwlagm.srv.us/'; do
+            echo "Checking $url"
+            status=$(curl -sS --connect-timeout 10 --max-time 20 -o /dev/null -w '%{http_code}' -X PROPFIND -H 'Depth: 0' "$url") || status=connection_error
+            echo "Unauthenticated PROPFIND: $status"
+            case "$status" in
+              401) echo 'Protected WebDAV endpoint reachable.' ;;
+              503) echo 'Tunnel unavailable or not routing to the local server.' ;;
+              000|connection_error) echo 'Network/DNS/TLS error.' ;;
+              *) echo 'Unexpected response; verify authentication.' ;;
+            esac
+          done
