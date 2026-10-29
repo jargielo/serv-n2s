@@ -1,4 +1,4 @@
-name: Verify WebDAV endpoint
+name: Verify WebDAV endpoint and SSH keys
 on:
   push:
     paths:
