@@ -25,3 +25,5 @@ jobs:
               *) echo 'Unexpected response; verify authentication.' ;;
             esac
           done
+          echo 'Checking public GitHub SSH keys...'
+          curl --fail --silent --show-error --max-time 15 'https://api.github.com/users/jargielo/keys' | python3 -c 'import sys,json; ks=json.load(sys.stdin); print("GitHub public SSH key count:",len(ks))'
