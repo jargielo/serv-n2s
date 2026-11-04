@@ -14,20 +14,46 @@ curl -fsSL https://raw.githubusercontent.com/jargielo/serv-n2s/main/n2s-overlay/
 
 Zanim je wkleisz, **zatrzymaj dotychczasowy tunel** poleceniem Ctrl+C i uruchom WebDAV FS PRO z wymaganym loginem i hasłem na porcie 8080.
 
-### Filmy: własny odtwarzacz
+### Filmy: własny odtwarzacz (MX Player, MX Player Pro, VLC)
 
-Po kliknięciu bezpośredniego linku do filmu (MP4, MKV, AVI i inne) pojawia się menu:
+Wcześniej MX Player otrzymywał bezpośredni adres WebDAV, ale nie przejmował danych
+uwierzytelnienia z przeglądarki. Powodowało to komunikat "Can't play this link".
 
-- **Odtwórz tutaj** — otwiera dotychczasowy odtwarzacz.
-- **Wybierz aplikację** — wysyła film do Androida przez `ACTION_VIEW`; możliwość wyboru zależy od przeglądarki i ustawień Androida.
-- **VLC** — próba otwarcia w aplikacji VLC.
-- **Kopiuj adres filmu** — do ręcznego wklejenia w odtwarzaczu sieciowym.
+Nowa procedura:
 
-Przy podglądzie opartym na elemencie HTML `<video>` pojawia się przycisk `Otwórz w…`. Jeżeli aplikacja korzysta z tymczasowego adresu `blob:`, nie można udostępnić go odtwarzaczowi zewnętrznemu; opcje zewnętrzne są wtedy wyłączone.
+1. Na stronie N2S CLOUD wybierz film i opcję `Otwórz w…`.
+2. Przeglądarka (po zalogowaniu do WebDAV FS PRO) żąda od nakładki
+   tymczasowego linku do **jednego konkretnego pliku**.
+3. Proxy weryfikuje uprawnienia na oryginalnym WebDAV FS PRO i wydaje losowy,
+   trudny do odgadnięcia link ważny przez maksymalnie **4 godziny**.
+4. Link wskazuje na strumień HTTP z obsługą `Range`, więc MX Player/VLC
+   mogą odtwarzać i przewijać film bez znajomości hasła.
+5. W menu dostępne są: **Odtwórz tutaj**, **Wybierz aplikację**, **MX Player**,
+   **MX Player Pro**, **VLC** oraz **Kopiuj adres tymczasowy**.
 
-**Uwaga:** odtwarzacz zewnętrzny nie dziedziczy hasła WebDAV zapamiętanego w przeglądarce. Może poprosić o ponowne zalogowanie lub odmówić strumieniowania. Nakładka nie przekazuje hasła w adresie ani w `intent:`.
+Ani login, ani hasło nie są umieszczane w URL. Nagłówek uwierzytelnienia
+jest przechowywany wyłącznie w pamięci procesu proxy do czasu wygaśnięcia linku,
+żeby pobrać wskazany plik z WebDAV. Restart proxy natychmiast unieważnia link.
 
-Aby zaktualizować działającą nakładkę, zatrzymaj ją przez Ctrl+C i ponownie uruchom instalator.
+**WAŻNE O BEZPIECZEŃSTWIE:** każdy, kto pozna tymczasowy URL, będzie mógł
+odtworzyć ten *jeden* film do wygaśnięcia linku — to tzw. token dostępu.
+Nie udostępniaj tych linków, także w publicznych zrzutach ekranu.
+Serwer srv.us może technicznie zobaczyć ścieżkę URL. Stosuj to rozwiązanie
+tylko do plików, które możesz w ten sposób udostępnić. Wrażliwych filmów
+nie wystawiaj na publiczny tunel.
+
+Strona musi mieć **bezpośredni adres pliku** (np. `/Filmy/video.mkv`).
+Jeśli WebDAV FS PRO używa wyłącznie `blob:` albo SPA bez ścieżki pliku,
+nakładka pokaże informację, że nie może przekazać materiału zewnętrznie.
+Obsługa `intent:` oraz wybierania aplikacji zależy od przeglądarki Androida.
+W MX Playerze dla sieciowego wideo możesz także włączyć dekodowanie HW+/SW.
+
+Przed aktualizacją zatrzymaj stary proces `n2s` przez Ctrl+C i ponownie
+uruchom instalator:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jargielo/serv-n2s/main/n2s-overlay/install-overlay.sh -o "$HOME/n2s-installer.sh" && bash "$HOME/n2s-installer.sh"
+```
 
 ### Codzienna obsługa
 
@@ -44,6 +70,7 @@ Aby zaktualizować działającą nakładkę, zatrzymaj ją przez Ctrl+C i ponown
 - Proxy działa tylko na `127.0.0.1:8081`.
 - Nie jest to nowy serwer plików. Logowanie, prawa użytkowników i cała obsługa danych należą do WebDAV FS PRO.
 - Skrypt nie loguje haseł ani nie zmienia bazy użytkowników.
+- Przygotowane linki wideo nie są publicznym katalogiem, ale są tymczasowymi tokenami dostępu; chronią tylko przed odgadnięciem adresu, nie przed jego wyciekiem.
 
 ### Ograniczenia
 
@@ -54,4 +81,4 @@ Aby zaktualizować działającą nakładkę, zatrzymaj ją przez Ctrl+C i ponown
 
 ### Testy wykonane lokalnie
 
-Weryfikacja składni Node.js/Bash i integracyjne testy dla HTML, loginu Basic, PROPFIND, PUT, POST, PATCH, MOVE, COPY, MKCOL, DELETE, LOCK, UNLOCK, pobierania binarnego, kompresji i przekierowań.
+Testy GitHub Actions: składnia Node.js/Bash, poprawność proxy WebDAV i 401 bez logowania, wydawanie tokenu do jednego pliku po uwierzytelnieniu, 206 Range, 200 GET, HEAD, odrzucanie prób bez hasła, niepoprawnego originu i nieprawidłowej ścieżki. Testy DOM dotyczą menu wyboru odtwarzaczy. Nie wykonano jeszcze testu z prawdziwym MX Playerem na Samsungu.
