@@ -25,6 +25,7 @@ jobs:
           node --check n2s-overlay/n2s-video.js
           node --check n2s-overlay/n2s-media.js
           node --check n2s-overlay/n2s-themes.js
+          node --check n2s-overlay/app.js
           bash -n n2s-overlay/n2s
           bash -n n2s-overlay/n2s-nazwa
           bash -n n2s-overlay/install-overlay.sh
@@ -38,3 +39,5 @@ jobs:
         run: node --test n2s-overlay/tests/video.test.js
       - name: Test live theme switching
         run: node --test n2s-overlay/tests/themes.test.js
+      - name: Test independent UI
+        run: node --test n2s-overlay/tests/independent.test.js
