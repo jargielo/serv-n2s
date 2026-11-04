@@ -129,6 +129,70 @@
     } catch (_) { return 'Wybrany film'; }
   }
 
+
+  // Match WebDAV's currently active native palette; never recolor its own UI.
+  // Independent N2S uses its CSS variables, so changing layouts also recolors
+  // an already open dialog without recreating the menu or playback grants.
+  function rgb(value) {
+    const m = /^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?\s*\)$/i.exec((value || '').trim());
+    if (!m || (m[4] !== undefined && Number(m[4]) < 0.9)) return null;
+    return [Number(m[1]),Number(m[2]),Number(m[3])];
+  }
+  function asRgb(v) { return 'rgb(' + v.map(x=>Math.max(0,Math.min(255,Math.round(x)))).join(', ') + ')'; }
+  function mix(a,b,weight) { return a.map((v,i)=>v*(1-weight)+b[i]*weight); }
+  function luminance(c) {
+    const linear=c.map(v=>{
+      const x=v/255;
+      return x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4);
+    });
+    return .2126*linear[0]+.7152*linear[1]+.0722*linear[2];
+  }
+  function colorOf(el, property) {
+    return el ? rgb(getComputedStyle(el)[property]) : null;
+  }
+  function nativePalette() {
+    const header = [...document.querySelectorAll('header, [role="banner"], [class*="header"], [class*="Header"]')]
+      .find(el=>!el.closest('.n2s-video-shade') && colorOf(el,'backgroundColor'));
+    const toolbar = [...document.querySelectorAll('nav, [role="toolbar"], [class*="toolbar"], [class*="Toolbar"]')]
+      .find(el=>!el.closest('.n2s-video-shade') && colorOf(el,'backgroundColor'));
+    const panel = colorOf(header,'backgroundColor') ||
+      colorOf(toolbar,'backgroundColor') ||
+      colorOf(document.body,'backgroundColor') || [47,57,74];
+    const button = [...document.querySelectorAll('main button, [role="main"] button, [role="toolbar"] button, nav button')]
+      .find(el=>!el.closest('.n2s-video-shade') && colorOf(el,'backgroundColor'));
+    const base = colorOf(button,'backgroundColor') || colorOf(toolbar,'backgroundColor') || mix(panel,luminance(panel)>.35?[0,0,0]:[255,255,255],.10);
+    const light = luminance(panel) > .24;
+    const fg = light ? [28,34,44] : [247,249,252];
+    const muted = light ? [73,81,93] : [196,204,216];
+    return {
+      panel:asRgb(panel),
+      button:asRgb(base),
+      hover:asRgb(mix(base,light?[0,0,0]:[255,255,255],.12)),
+      border:asRgb(mix(base,light?[0,0,0]:[255,255,255],.20)),
+      text:asRgb(fg),
+      muted:asRgb(muted),
+      accent:asRgb(mix(panel,light?[0,0,0]:[255,255,255],.55)),
+      radius:'12px'
+    };
+  }
+  function applyPlayerPalette(shade) {
+    if (!shade) return;
+    const app = !!document.querySelector('#n2s-app') &&
+      !!getComputedStyle(document.body).getPropertyValue('--panel').trim();
+    shade.dataset.n2sPlayerSkin = app ? 'app' : 'native';
+    if (app) {
+      for(const key of ['panel','button','button-hover','border','text','muted','accent','radius']){
+        shade.style.removeProperty('--player-'+key);
+      }
+      return;
+    }
+    const p=nativePalette();
+    for(const key of ['panel','button','hover','border','text','muted','accent','radius']) {
+      const name=key==='hover'?'button-hover':key;
+      shade.style.setProperty('--player-'+name,p[key]);
+    }
+  }
+
   function openMenu(url, playNative) {
     dismiss();
     const shade = elt('div', MARKER + ' n2s-video-shade');
@@ -188,6 +252,7 @@
     close.addEventListener('click', dismiss);
     dialog.appendChild(close);
     shade.appendChild(dialog);
+    applyPlayerPalette(shade);
     shade.addEventListener('click', event => {
       if (event.target === shade) dismiss();
     });
@@ -195,6 +260,12 @@
     menu = shade;
     close.focus();
   }
+
+  // Also update when the user changes theme while the dialog stays open.
+  const paletteObserver = new MutationObserver(() => { if (menu) applyPlayerPalette(menu); });
+  if (document.documentElement) paletteObserver.observe(document.documentElement, {attributes:true,attributeFilter:['data-n2s-theme','class','style']});
+  if (document.body) paletteObserver.observe(document.body, {attributes:true,attributeFilter:['data-theme','class','style']});
+  window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (menu) applyPlayerPalette(menu); });
 
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') dismiss();
