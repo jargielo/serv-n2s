@@ -95,7 +95,7 @@ test('native WebDAV player menu uses live header palette rather than hard-coded 
   assert.ok(shade);
   assert.equal(shade.dataset.n2sPlayerSkin,'native');
   assert.equal(shade.style.getPropertyValue('--player-panel'),'rgb(234, 237, 240)');
-  assert.equal(shade.style.getPropertyValue('--player-text'),'rgb(28, 34, 44)');
+  assert.equal(shade.style.getPropertyValue('--player-text'),'rgb(30, 37, 50)');
   assert.equal(document.querySelectorAll('.n2s-video-action').length>0,true);
 });
 
