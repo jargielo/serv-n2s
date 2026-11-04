@@ -63,17 +63,19 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   const html=await request('/','GET',true);
   assert.equal(html.status,200);
   assert.match(html.body,/_n2s_overlay_2026\/brand\.js/);
+  assert.doesNotMatch(html.body, /_n2s_overlay_2026\/(?:themes\.(?:css|js)|style\.css)/, 'native WebDAV colors and icons remain intact');
   assert.match(html.body,/_n2s_overlay_2026\/video\.js/);
   assert.match(html.body,/_n2s_overlay_2026\/video\.css/);
-  assert.match(html.body, /_n2s_overlay_2026\/themes\.js/);
-  assert.match(html.body, /_n2s_overlay_2026\/themes\.css/);
+  assert.doesNotMatch(html.body, /_n2s_overlay_2026\/themes\.js/);
+  assert.doesNotMatch(html.body, /_n2s_overlay_2026\/themes\.css/);
   for (const asset of ['themes.js', 'themes.css', 'themes/amoled.svg', 'themes/catalyst.svg', 'themes/pro.svg']) {
     const file=await request('/_n2s_overlay_2026/'+asset);
     assert.equal(file.status, 200, 'theme asset '+asset);
     assert.ok(file.body.length > 40, 'nonempty theme asset '+asset);
   }
   const js=await request('/_n2s_overlay_2026/brand.js');
-  assert.match(js.body,/N2S CLOUD/);
+  assert.match(js.body,/WebDAV n2s/);
+  assert.doesNotMatch(js.body,/classList\.add\('n2s-brand-text'\)/);
   const playerScript=await request('/_n2s_overlay_2026/video.js');
   assert.equal(playerScript.status,200);
   assert.match(playerScript.body,/Wybierz aplikację/);
@@ -82,8 +84,8 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   const playerStyle=await request('/_n2s_overlay_2026/video.css');
   assert.equal(playerStyle.status,200);
   assert.match(playerStyle.body,/n2s-video-dialog/);
-  assert.match(html.body, /_n2s_overlay_2026\/themes\.js/);
-  assert.match(html.body, /_n2s_overlay_2026\/themes\.css/);
+  assert.doesNotMatch(html.body, /_n2s_overlay_2026\/themes\.js/);
+  assert.doesNotMatch(html.body, /_n2s_overlay_2026\/themes\.css/);
   const appearance = await request('/_n2s_overlay_2026/wyglad');
   assert.equal(appearance.status, 200);
   assert.match(appearance.body, /N2S CLOUD — Motywy/);
