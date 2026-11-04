@@ -17,12 +17,12 @@ test('native WebDAV header renamed without changing folder CSS or icons',()=>{
  assert.ok(script);
  // Evaluate the server-provided script template, without loading the server itself.
  const factory=new Function('name',script[1]);
- const code=factory('WebDAV n2s');
+ const code=factory('n2s Cloude');
  dom.window.eval(code);
  return new Promise(resolve=>setTimeout(resolve,60)).then(()=>{
   const {document}=dom.window;
-  assert.equal(document.querySelector('h1').textContent,'WebDAV n2s');
-  assert.equal(document.title,'WebDAV n2s');
+  assert.equal(document.querySelector('h1').textContent,'n2s Cloude');
+  assert.equal(document.title,'n2s Cloude');
   const folder=document.querySelector('.original-folder');
   assert.equal(folder.textContent,'📁 Filmy');
   assert.equal(folder.getAttribute('style'),'color:rgb(1,2,3)');
