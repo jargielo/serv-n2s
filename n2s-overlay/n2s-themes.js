@@ -10,7 +10,7 @@
   const APP_PATH='/n2s_cloude';
   function repairOldHashRoute() {
     const frag=window.location.hash || '';
-    if (/^#\/?_n2s_overlay_2026\/app\/?(?:[?#]|$)/.test(frag)) {
+    if (/^#\/?(?:_n2s_overlay_2026\/app|n2s_cloude)\/?(?:[?#]|$)/i.test(frag)) {
       window.location.replace(window.location.origin+APP_PATH);
       return true;
     }
