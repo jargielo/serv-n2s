@@ -129,3 +129,27 @@ test('player CSS uses active application tokens, not fixed buttons', () => {
   assert.match(css, /color:\s*var\(--player-text\)\s*!important/);
   assert.match(html, /_n2s_overlay_2026\/video\.css/);
 });
+
+test('WebDAV light appearance without a semantic header produces a light player menu', () => {
+  const dom=makeDom('<div class="native-top" style="background-color:rgb(221,228,240)">WebDAV FS PRO</div><a id="film" href="/Filmy/wideo.mp4">Film</a>');
+  const {document,MouseEvent}=dom.window;
+  document.body.style.backgroundColor='rgb(248,249,251)';
+  document.getElementById('film').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
+  const menu=document.querySelector('.n2s-video-shade');
+  assert.ok(menu);
+  assert.equal(menu.dataset.n2sPlayerSkin,'native');
+  assert.equal(menu.style.getPropertyValue('--player-panel'),'rgb(248, 249, 251)');
+  assert.equal(menu.style.getPropertyValue('--player-text'),'rgb(30, 37, 50)');
+});
+
+test('WebDAV dark appearance without a semantic header produces a dark player menu', () => {
+  const dom=makeDom('<div class="native-top" style="background-color:rgb(35,43,57)">WebDAV FS PRO</div><a id="film" href="/Filmy/wideo.mp4">Film</a>');
+  const {document,MouseEvent}=dom.window;
+  document.body.style.backgroundColor='rgb(26,31,43)';
+  document.getElementById('film').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
+  const menu=document.querySelector('.n2s-video-shade');
+  assert.ok(menu);
+  assert.equal(menu.dataset.n2sPlayerSkin,'native');
+  assert.equal(menu.style.getPropertyValue('--player-panel'),'rgb(26, 31, 43)');
+  assert.equal(menu.style.getPropertyValue('--player-text'),'rgb(247, 249, 252)');
+});
