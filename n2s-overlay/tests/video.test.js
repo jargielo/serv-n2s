@@ -52,7 +52,7 @@ test('clicking a video file offers Android chooser, MX Player, Arc Player and VL
   assert.match(links[1].getAttribute('href'), /com\.mxtech\.videoplayer\.ad/);
   assert.match(links[2].getAttribute('href'), /com\.mxtech\.videoplayer\.pro/);
   assert.match(links[0].getAttribute('href'), /action=android.intent.action.VIEW/);
-  assert.match(links[3].getAttribute('href'), /package=com\\.videoplayer\\.arcplayer/);
+  assert.match(links[3].getAttribute('href'), /package=com\.videoplayer\.arcplayer/);
   assert.match(links[4].getAttribute('href'), /package=org\.videolan\.vlc/);
   assert.ok(!links[0].getAttribute('href').includes('@'));
 });
