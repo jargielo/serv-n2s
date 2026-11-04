@@ -62,6 +62,20 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   const playerStyle=await request('/_n2s_overlay_2026/video.css');
   assert.equal(playerStyle.status,200);
   assert.match(playerStyle.body,/n2s-video-dialog/);
+  assert.match(html.body, /_n2s_overlay_2026\/themes\.js/);
+  assert.match(html.body, /_n2s_overlay_2026\/themes\.css/);
+  const themeScript = await request('/_n2s_overlay_2026/themes.js');
+  assert.equal(themeScript.status, 200);
+  assert.match(themeScript.body, /n2s\.ui\.theme\.v1/);
+  const themeCss = await request('/_n2s_overlay_2026/themes.css');
+  assert.equal(themeCss.status, 200);
+  assert.match(themeCss.body, /data-n2s-theme/);
+  for (const id of ['amoled','catalyst','pro']) {
+    const preview = await request('/_n2s_overlay_2026/themes/' + id + '.svg');
+    assert.equal(preview.status, 200);
+    assert.match(preview.headers['content-type'], /image\/svg\+xml/);
+    assert.match(preview.body, /<svg/);
+  }
   const dav=await request('/','PROPFIND',true);
   assert.equal(dav.status,207);
   assert.equal(dav.body,'<D:multistatus/>');
