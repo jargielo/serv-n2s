@@ -55,7 +55,7 @@ const append=(node,...children)=>{node.append(...children.filter(Boolean));retur
 const toast=message=>{document.querySelector('.toast')?.remove();const node=mk('div','toast',message);document.body.append(node);setTimeout(()=>node.remove(),4500)};
 function saveTheme(value){if(!styles[value])return;state.theme=value;document.body.dataset.theme=value;try{localStorage.setItem('n2s.app.theme',value)}catch{}render()}
 try{const t=localStorage.getItem('n2s.app.theme');if(styles[t])state.theme=t}catch{}
-function localPath(href){const u=new URL(href,location.origin);if(u.origin!==location.origin && !((u.hostname==='127.0.0.1'||u.hostname==='localhost')&&u.port==='8080'&&u.protocol==='http:'))throw Error('Nieprawidłowa ścieżka pliku');return u.pathname+u.search}
+function localPath(href){const u=new URL(href,location.origin);if(u.origin!==location.origin && !((u.hostname==='127.0.0.1'||u.hostname==='localhost')&&u.port==='8081'&&u.protocol==='http:'))throw Error('Nieprawidłowa ścieżka pliku');return u.pathname+u.search}
 function filePath(name,isFolder=false){if(!name||name==='.'||name==='..'||/[/\\\r\n\0]/.test(name))throw Error('Nieprawidłowa nazwa pliku');return state.dir.replace(/\/?$/,'/')+encodeURIComponent(name)+(isFolder?'/':'')}
 const size=n=>n==null?'—':n>=1073741824?(n/1073741824).toFixed(1)+' GB':n>=1048576?(n/1048576).toFixed(1)+' MB':n>=1024?(n/1024).toFixed(0)+' KB':n+' B';
 const date=s=>{const d=new Date(s);return !s||isNaN(d)?'—':d.toLocaleDateString('pl-PL')};
