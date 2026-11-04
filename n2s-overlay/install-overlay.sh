@@ -39,7 +39,7 @@ fi
 printf '\nZainstalowano nakładkę. WebDAV FS PRO musi być uruchomiony na porcie 8080.\n'
 printf 'Stary tunel "serwer" należy wcześniej zatrzymać przez CTRL+C.\n'
 printf 'Po restarcie nakladki opcja Wybierz odtwarzacz pojawi sie przy filmach.\n'
-printf 'Nowy interfejs: https://jargielo.gh.srv.us/_n2s_overlay_2026/app\n'
+printf 'Nowy interfejs: https://jargielo.gh.srv.us/n2s_cloude\n'
 printf 'Uruchamianie: n2s\n'
 printf 'Zmiana nazwy: n2s-nazwa "MOJA CHMURA"\n\n'
 exec "$PREFIX/bin/n2s"
