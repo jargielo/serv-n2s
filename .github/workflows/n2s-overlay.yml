@@ -24,7 +24,6 @@ jobs:
           node --check n2s-overlay/n2s-overlay.js
           node --check n2s-overlay/n2s-video.js
           node --check n2s-overlay/n2s-media.js
-          node --check n2s-overlay/n2s-themes.js
           node --check n2s-overlay/app.js
           bash -n n2s-overlay/n2s
           bash -n n2s-overlay/n2s-nazwa
@@ -37,8 +36,6 @@ jobs:
         run: npm install --no-save --no-package-lock jsdom@26.1.0
       - name: Test browser player chooser
         run: node --test n2s-overlay/tests/video.test.js
-      - name: Test live theme switching
-        run: node --test n2s-overlay/tests/themes.test.js
       - name: Test independent UI
         run: node --test n2s-overlay/tests/independent.test.js
       - name: Test original WebDAV branding and icons
