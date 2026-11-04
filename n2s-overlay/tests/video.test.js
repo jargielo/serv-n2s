@@ -16,11 +16,24 @@ function makeDom(body) {
   dom.window.document.addEventListener('click', event => {
     if (event.target.closest?.('a[href]')) event.preventDefault();
   });
+  dom.window.fetch = async (url, options) => {
+    assert.equal(url, '/_n2s_overlay_2026/media-grant');
+    assert.equal(options.method, 'POST');
+    assert.equal(options.credentials, 'same-origin');
+    assert.equal(options.headers['X-N2S-Playback'], '1');
+    const req = JSON.parse(options.body);
+    assert.ok(req.path.endsWith('.mkv') || req.path.endsWith('.mp4'));
+    const name = req.path.split('/').pop();
+    return {ok:true, json:async() => ({
+      url:'/_n2s_overlay_2026/media-stream/' + 'a'.repeat(43) + '/' + name,
+      expiresInSeconds:14400
+    })};
+  };
   dom.window.eval(script);
   return dom;
 }
 
-test('clicking a video file offers Android chooser and VLC without exposing any credentials', () => {
+test('clicking a video file offers Android chooser, MX Player and VLC without exposing credentials', async () => {
   const dom = makeDom('<a id="film" href="/Filmy/film%20testowy.mkv">film testowy.mkv</a>');
   const {document, MouseEvent} = dom.window;
   const anchor = document.getElementById('film');
@@ -30,11 +43,16 @@ test('clicking a video file offers Android chooser and VLC without exposing any 
   assert.match(dialog.textContent, /Wybierz aplikację/);
   assert.match(dialog.textContent, /VLC/);
   assert.match(dialog.textContent, /Odtwórz tutaj/);
+  await new Promise(resolve=>setTimeout(resolve,30));
   const links = [...dialog.querySelectorAll('a[href^="intent:"]')];
-  assert.equal(links.length, 2);
+  assert.equal(links.length, 4);
   assert.ok(links[0].getAttribute('href').includes('film%20testowy.mkv'));
+  assert.ok(links[0].getAttribute('href').includes('/media-stream/'));
+  assert.ok(!links[0].getAttribute('href').includes('/Filmy/'));
+  assert.match(links[1].getAttribute('href'), /com\.mxtech\.videoplayer\.ad/);
+  assert.match(links[2].getAttribute('href'), /com\.mxtech\.videoplayer\.pro/);
   assert.match(links[0].getAttribute('href'), /action=android.intent.action.VIEW/);
-  assert.match(links[1].getAttribute('href'), /package=org\.videolan\.vlc/);
+  assert.match(links[3].getAttribute('href'), /package=org\.videolan\.vlc/);
   assert.ok(!links[0].getAttribute('href').includes('@'));
 });
 
@@ -59,6 +77,7 @@ test('visible HTML video preview gets an external player action', async () => {
   const btn = dom.window.document.querySelector('.n2s-video-pick');
   assert.ok(btn, 'video preview has external player control');
   btn.click();
+  await new Promise(resolve=>setTimeout(resolve,30));
   const dialog = dom.window.document.querySelector('[role="dialog"]');
   assert.ok(dialog);
   assert.match(dialog.textContent,/wideo.mp4/);
