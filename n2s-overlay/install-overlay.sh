@@ -2,25 +2,32 @@
 set -euo pipefail
 REPO='https://raw.githubusercontent.com/jargielo/serv-n2s/main/n2s-overlay'
 TARGET="$HOME/.local/share/n2s-overlay"
-mkdir -p "$TARGET" "$HOME/.config/n2s-overlay"
+mkdir -p "$TARGET" "$TARGET/themes" "$HOME/.config/n2s-overlay"
 
 printf '\n[N2S CLOUD] Instalowanie narzędzi Termux...\n'
 pkg install -y nodejs openssh curl coreutils
 
-for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css n2s n2s-nazwa; do
+for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css n2s-themes.js n2s-themes.css n2s n2s-nazwa; do
   printf 'Pobieram %s...\n' "$FILE"
   curl -fLsS --connect-timeout 15 --max-time 60 "$REPO/$FILE" -o "$TARGET/$FILE.new"
+done
+for THEME in amoled catalyst pro; do
+  curl -fLsS --connect-timeout 15 --max-time 60 "$REPO/themes/$THEME.svg" -o "$TARGET/themes/$THEME.svg.new"
 done
 node --check --input-type=commonjs < "$TARGET/n2s-overlay.js.new"
 node --check --input-type=commonjs < "$TARGET/n2s-media.js.new"
 node --check < "$TARGET/n2s-video.js.new"
+node --check < "$TARGET/n2s-themes.js.new"
 bash -n "$TARGET/n2s.new"
 bash -n "$TARGET/n2s-nazwa.new"
 for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css n2s n2s-nazwa; do
   mv "$TARGET/$FILE.new" "$TARGET/$FILE"
 done
+for THEME in amoled catalyst pro; do
+  mv "$TARGET/themes/$THEME.svg.new" "$TARGET/themes/$THEME.svg"
+done
 chmod 700 "$TARGET/n2s-overlay.js" "$TARGET/n2s" "$TARGET/n2s-nazwa"
-chmod 600 "$TARGET/n2s-media.js" "$TARGET/n2s-video.js" "$TARGET/n2s-video.css"
+chmod 600 "$TARGET/n2s-media.js" "$TARGET/n2s-video.js" "$TARGET/n2s-video.css" "$TARGET/n2s-themes.js" "$TARGET/n2s-themes.css"
 ln -sf "$TARGET/n2s" "$PREFIX/bin/n2s"
 ln -sf "$TARGET/n2s-nazwa" "$PREFIX/bin/n2s-nazwa"
 if [ ! -s "$HOME/.config/n2s-overlay/name.txt" ]; then
