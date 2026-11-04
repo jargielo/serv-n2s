@@ -7,7 +7,7 @@
   window.__n2sThemesInstalled = true;
   // Rescue links mistakenly routed inside WebDAV FS PRO's hash-based router.
   // Browsers never send the # fragment to the server, so the native SPA shows 404.
-  const APP_PATH='/_n2s_overlay_2026/app';
+  const APP_PATH='/n2s_cloude';
   function repairOldHashRoute() {
     const frag=window.location.hash || '';
     if (/^#\/?_n2s_overlay_2026\/app\/?(?:[?#]|$)/.test(frag)) {
