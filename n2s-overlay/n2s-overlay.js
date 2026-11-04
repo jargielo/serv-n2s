@@ -84,7 +84,7 @@ function updateBrand(){
     if(!TITLES.has(text.toLowerCase()))continue;
     const parent=node.parentElement;
     if(!parent||parent.closest('script,style,textarea,input,button,[contenteditable="true"]'))continue;
-    node.nodeValue=node.nodeValue.replace(/WebDAV\s+FS(?:\s+PRO|\s+UI)?/i,BRAND);
+    node.nodeValue=node.nodeValue.replace(/WebDAV\\s+FS(?:\\s+PRO|\\s+UI)?/i,BRAND);
     parent.classList.add('n2s-brand-text');
     changed++;
     if(changed>=6)break;
@@ -160,7 +160,7 @@ function requestHandler(req, res) {
     const upHeaders = copyResponseHeaders(up.headers);
     // Redirects pointing to the private port must lead back through the public proxy.
     if (typeof upHeaders.location === 'string') {
-      const localRedirect = new RegExp('^http://(?:127\.0\.0\.1|localhost):' + UPSTREAM_PORT + '(?=/|$)', 'i');
+      const localRedirect = new RegExp('^http://(?:127\\.0\\.0\\.1|localhost):' + UPSTREAM_PORT + '(?=/|$)', 'i');
       upHeaders.location = upHeaders.location.replace(localRedirect, `https://${req.headers.host || 'jargielo.gh.srv.us'}`);
     }
     const isHtml = req.method === 'GET' && up.statusCode === 200 && /text\/html/i.test(String(up.headers['content-type'] || ''));
