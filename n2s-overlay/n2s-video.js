@@ -120,27 +120,52 @@
     return base + (packageName ? 'package=' + packageName + ';' : '') + 'end';
   }
 
+  function requestWebDavLogin() {
+    // Browser native prompt is available even when app CSS is not.
+    // Credentials are never written to URL, localStorage or console.
+    const username=window.prompt('Odtwarzacz zewnętrzny — login WebDAV:');
+    if(username===null)return null;
+    if(!username.trim() || username.length>200)throw new Error('Nieprawidłowy login WebDAV.');
+    const password=window.prompt('Hasło WebDAV (używane tylko do tego połączenia):');
+    if(password===null)return null;
+    if(password.length>512)throw new Error('Hasło jest za długie.');
+    const bytes=new TextEncoder().encode(username+':'+password);
+    let binary='';
+    for(const b of bytes)binary+=String.fromCharCode(b);
+    return 'Basic '+btoa(binary);
+  }
   async function temporaryMediaUrl(videoUrl) {
     const uri = new URL(videoUrl, location.href);
     if (uri.origin !== location.origin || !/^https?:$/.test(uri.protocol)) {
       throw new Error('Nieprawidłowy adres pliku.');
     }
-    const reply = await fetch('/_n2s_overlay_2026/media-grant', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-N2S-Playback': '1'
-      },
-      body: JSON.stringify({path: uri.pathname + uri.search})
-    });
-    let data = {};
-    try { data = await reply.json(); } catch (_) {}
-    if (!reply.ok || !data.url) {
-      throw new Error(data.error || 'Nie udało się przygotować odtwarzania. Sprawdź logowanie WebDAV.');
+    // The WebDAV SPA may use JavaScript-managed login that a fetch to this
+    // separate endpoint does not inherit. Retry explicit Basic only after 401.
+    async function issue(authHeader) {
+      const headers={
+        'Content-Type':'application/json',
+        'X-N2S-Playback':'1'
+      };
+      if(authHeader)headers.Authorization=authHeader;
+      const reply=await fetch('/_n2s_overlay_2026/media-grant',{
+        method:'POST',credentials:'same-origin',headers,
+        body:JSON.stringify({path:uri.pathname+uri.search})
+      });
+      let data={};
+      try{data=await reply.json()}catch(_){}
+      return {reply,data};
     }
-    const grant = new URL(data.url, location.origin);
-    if (grant.origin !== location.origin || !grant.pathname.startsWith('/_n2s_overlay_2026/media-stream/')) {
+    let {reply,data}=await issue();
+    if(reply.status===401) {
+      const header=requestWebDavLogin();
+      if(!header)throw new Error('Anulowano logowanie do odtwarzacza zewnętrznego.');
+      ({reply,data}=await issue(header));
+    }
+    if(!reply.ok || !data.url){
+      throw new Error(data.error || 'Nie udało się przygotować odtwarzania (HTTP '+reply.status+').');
+    }
+    const grant=new URL(data.url,location.origin);
+    if(grant.origin!==location.origin || !grant.pathname.startsWith('/_n2s_overlay_2026/media-stream/')){
       throw new Error('Serwer zwrócił nieprawidłowy adres.');
     }
     return grant.href;
