@@ -171,7 +171,7 @@ test('clicking filename inside WebDAV hash-folder row offers external players', 
   assert.match(dialog.textContent,/MX Player/);
   assert.match(dialog.textContent,/Arc Player/);
   const choice=[...dialog.querySelectorAll('a[href^="intent:"]')][0];
-  assert.match(choice.href,/Seriale/);
+  assert.doesNotMatch(choice.href,/\/Seriale\//, 'temporary stream URL must not disclose original folder');
   assert.match(choice.href,/Rafa%C5%82%20Rutkowski/);
   dialog.querySelector('.n2s-video-action').click();
   assert.equal(vendorClick,1,'native preview opens after choosing in-browser playback');
