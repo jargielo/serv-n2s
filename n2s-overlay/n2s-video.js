@@ -68,6 +68,32 @@
     return base + (packageName ? 'package=' + packageName + ';' : '') + 'end';
   }
 
+  async function temporaryMediaUrl(videoUrl) {
+    const uri = new URL(videoUrl, location.href);
+    if (uri.origin !== location.origin || !/^https?:$/.test(uri.protocol)) {
+      throw new Error('Nieprawidłowy adres pliku.');
+    }
+    const reply = await fetch('/_n2s_overlay_2026/media-grant', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-N2S-Playback': '1'
+      },
+      body: JSON.stringify({path: uri.pathname + uri.search})
+    });
+    let data = {};
+    try { data = await reply.json(); } catch (_) {}
+    if (!reply.ok || !data.url) {
+      throw new Error(data.error || 'Nie udało się przygotować odtwarzania. Sprawdź logowanie WebDAV.');
+    }
+    const grant = new URL(data.url, location.origin);
+    if (grant.origin !== location.origin || !grant.pathname.startsWith('/_n2s_overlay_2026/media-stream/')) {
+      throw new Error('Serwer zwrócił nieprawidłowy adres.');
+    }
+    return grant.href;
+  }
+
   function elt(tag, cls, text) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -122,23 +148,39 @@
     dialog.appendChild(browser);
 
     if (url) {
-      dialog.appendChild(linkRow('Wybierz aplikację', 'Wybór odtwarzacza Android — jeśli obsługuje go przeglądarka', intentUrl(url)));
-      dialog.appendChild(linkRow('VLC', 'Uruchom VLC na Androidzie, jeśli jest zainstalowany', intentUrl(url, 'org.videolan.vlc')));
-      const copy = menuRow('Kopiuj adres filmu', 'Wklej adres np. w odtwarzaczu sieciowym');
-      copy.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(url);
-          copy.querySelector('span').textContent = 'Adres skopiowany';
-        } catch (_) {
-          copy.querySelector('span').textContent = 'Nie można skopiować — użyj adresu strony';
-        }
+      const area = elt('div', 'n2s-video-links');
+      area.appendChild(elt('p', 'n2s-video-warning', 'Przygotowuję bezpieczny adres do odtwarzania...'));
+      dialog.appendChild(area);
+
+      temporaryMediaUrl(url).then(streamUrl => {
+        if (menu !== shade) return;
+        area.replaceChildren();
+        area.appendChild(linkRow('Wybierz aplikację', 'Wybierz dowolny zgodny odtwarzacz na Androidzie', intentUrl(streamUrl)));
+        area.appendChild(linkRow('MX Player', 'Bezpłatna wersja MX Player', intentUrl(streamUrl, 'com.mxtech.videoplayer.ad')));
+        area.appendChild(linkRow('MX Player Pro', 'Płatna wersja MX Player', intentUrl(streamUrl, 'com.mxtech.videoplayer.pro')));
+        area.appendChild(linkRow('VLC', 'Otwórz w VLC na Androidzie', intentUrl(streamUrl, 'org.videolan.vlc')));
+        const copy = menuRow('Kopiuj adres tymczasowy', 'Przydatne w odtwarzaczach sieciowych');
+        copy.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(streamUrl);
+            copy.querySelector('span').textContent = 'Adres skopiowany';
+          } catch (_) {
+            copy.querySelector('span').textContent = 'Kopiowanie nie powiodło się';
+          }
+        });
+        area.appendChild(copy);
+        area.appendChild(elt('p', 'n2s-video-warning',
+          'Link pozwala odtwarzać wyłącznie ten film i wygasa po 4 godzinach. Nie udostępniaj go innym. Hasło WebDAV nie jest wpisywane w link.'));
+      }).catch(error => {
+        if (menu !== shade) return;
+        area.replaceChildren();
+        area.appendChild(elt('p', 'n2s-video-warning',
+          'Nie można przygotować zewnętrznego odtwarzania: ' + (error.message || 'błąd serwera') +
+          '. Odtwarzanie na stronie nadal może działać.'));
       });
-      dialog.appendChild(copy);
-      dialog.appendChild(elt('p', 'n2s-video-warning',
-        'Plik pozostaje zabezpieczony loginem i hasłem WebDAV. Odtwarzacz zewnętrzny może poprosić o ponowne logowanie albo nie obsługiwać takiego połączenia.'));
     } else {
       dialog.appendChild(elt('p', 'n2s-video-warning',
-        'Odtwarzacz wbudowany korzysta z tymczasowego adresu (np. blob:). Nie można bezpiecznie przekazać go do innej aplikacji. Możesz skopiować bezpośredni adres pliku z WebDAV i otworzyć go w odtwarzaczu.'));
+        'Podgląd korzysta z adresu tymczasowego (np. blob:). Zewnętrzne odtwarzanie wymaga bezpośredniego adresu filmu.'));
     }
 
     const close = menuRow('Anuluj');
