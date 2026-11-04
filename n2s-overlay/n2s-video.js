@@ -266,6 +266,11 @@
   if (document.documentElement) paletteObserver.observe(document.documentElement, {attributes:true,attributeFilter:['data-n2s-theme','class','style']});
   if (document.body) paletteObserver.observe(document.body, {attributes:true,attributeFilter:['data-theme','class','style']});
   window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (menu) applyPlayerPalette(menu); });
+  // Some versions of WebDAV FS PRO apply the selected theme directly to
+  // the header/toolbar, without changing the html/body attributes.
+  for (const nativeSurface of document.querySelectorAll('header, [role="banner"], nav, [role="toolbar"]')) {
+    paletteObserver.observe(nativeSurface, {attributes:true,attributeFilter:['class','style','data-theme']});
+  }
 
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') dismiss();
