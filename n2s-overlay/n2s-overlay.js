@@ -25,7 +25,7 @@ const VIDEO_JS_PATH = ASSET_PREFIX + 'video.js';
 const VIDEO_CSS_PATH = ASSET_PREFIX + 'video.css';
 const THEME_JS_PATH = ASSET_PREFIX + 'themes.js';
 const THEME_CSS_PATH = ASSET_PREFIX + 'themes.css';
-const INJECT = `<link rel="stylesheet" href="${CSS_PATH}"><link rel="stylesheet" href="${VIDEO_CSS_PATH}"><script defer src="${JS_PATH}"></script><script defer src="${VIDEO_JS_PATH}"></script><link rel="stylesheet" href="${THEME_CSS_PATH}"><script defer src="${THEME_JS_PATH}"></script>`;
+const INJECT = `<link rel="stylesheet" href="${VIDEO_CSS_PATH}"><script defer src="${JS_PATH}"></script><script defer src="${VIDEO_JS_PATH}"></script>`;
 const mediaRoutes = createMediaRoutes({host: HOST, port: UPSTREAM_PORT, prefix: ASSET_PREFIX});
 const HOP_HEADERS = ['connection', 'keep-alive', 'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade'];
 
@@ -73,35 +73,37 @@ const STYLE = `
 `;
 
 function scriptForName(name) {
+  // Rename only the visible product heading and browser title.
+  // No injected theme CSS, icon override, or layout mutation.
   return `(()=>{
 'use strict';
 const BRAND=${JSON.stringify(name)};
-const TITLES=new Set(['webdav fs pro','webdav fs','webdav fs ui']);
-let raf=0;
+const TITLES=new Set(['webdav fs pro','webdav fs','webdav fs ui','n2s cloud']);
+let scheduled=false;
 function updateBrand(){
-  raf=0;
-  if(document.title && /webdav fs/i.test(document.title))document.title=BRAND+' · pliki';
-  const root=document.body;
-  if(!root)return;
-  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-  let node,changed=0;
-  while((node=walker.nextNode())){
-    const text=(node.nodeValue||'').trim();
-    if(!TITLES.has(text.toLowerCase()))continue;
+  scheduled=false;
+  if (/^(?:webdav fs(?: pro| ui)?|n2s cloud)$/i.test((document.title||'').trim())) {
+    document.title=BRAND;
+  }
+  if (!document.body) return;
+  const nodes=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  let node, count=0;
+  while ((node=nodes.nextNode())) {
+    const current=(node.nodeValue||'').trim();
+    if (!TITLES.has(current.toLowerCase())) continue;
     const parent=node.parentElement;
-    if(!parent||parent.closest('script,style,textarea,input,button,[contenteditable="true"]'))continue;
-    node.nodeValue=node.nodeValue.replace(/WebDAV\\s+FS(?:\\s+PRO|\\s+UI)?/i,BRAND);
-    parent.classList.add('n2s-brand-text');
-    changed++;
-    if(changed>=6)break;
+    if (!parent || parent.closest('script,style,textarea,input,button,[contenteditable="true"],.n2s-video-shade')) continue;
+    node.nodeValue=node.nodeValue.replace(current,BRAND);
+    if (++count>=3) break;
   }
 }
-function schedule(){if(!raf)raf=requestAnimationFrame(updateBrand);}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});
+function schedule(){
+  if(!scheduled){scheduled=true;requestAnimationFrame(updateBrand);}
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',schedule,{once:true});
 else schedule();
-const observer=new MutationObserver(schedule);
-function observe(){if(document.documentElement)observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true});}
-observe();
+const obs=new MutationObserver(schedule);
+if(document.documentElement)obs.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
 })();`;
 }
 
@@ -198,7 +200,7 @@ function requestHandler(req, res) {
     return noCache(res, 'text/css; charset=utf-8', STYLE, req.method === 'HEAD');
   }
   if ((req.method === 'GET' || req.method === 'HEAD') && reqPath === JS_PATH) {
-    return noCache(res, 'application/javascript; charset=utf-8', scriptForName(getName()), req.method === 'HEAD');
+    return noCache(res, 'application/javascript; charset=utf-8', scriptForName('WebDAV n2s'), req.method === 'HEAD');
   }
   if ((req.method === 'GET' || req.method === 'HEAD') && (reqPath === VIDEO_JS_PATH || reqPath === VIDEO_CSS_PATH)) {
     const isJs = reqPath === VIDEO_JS_PATH;
