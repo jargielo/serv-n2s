@@ -145,7 +145,7 @@ function requestHandler(req, res) {
   if (req.method === 'GET' && req.url === '/' &&
       /text\/html/i.test(String(req.headers.accept || ''))) {
     res.writeHead(302, {
-      'Location': '/n2s_cloude',
+      'Location': '/n2s_cloude#', // explicit empty fragment: prevent /#/ inheritance
       'Cache-Control': 'no-store',
       'Vary': 'Accept',
       'Content-Length': '0'
