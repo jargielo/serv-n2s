@@ -78,11 +78,11 @@ function scriptForName(name) {
   return `(()=>{
 'use strict';
 const BRAND=${JSON.stringify(name)};
-const TITLES=new Set(['webdav fs pro','webdav fs','webdav fs ui','n2s cloud']);
+const TITLES=new Set(['webdav fs pro','webdav fs','webdav fs ui','n2s cloud','webdav n2s']);
 let scheduled=false;
 function updateBrand(){
   scheduled=false;
-  if (/^(?:webdav fs(?: pro| ui)?|n2s cloud)$/i.test((document.title||'').trim())) {
+  if (/^(?:webdav fs(?: pro| ui)?|n2s cloud|webdav n2s)$/i.test((document.title||'').trim())) {
     document.title=BRAND;
   }
   if (!document.body) return;
@@ -200,7 +200,7 @@ function requestHandler(req, res) {
     return noCache(res, 'text/css; charset=utf-8', STYLE, req.method === 'HEAD');
   }
   if ((req.method === 'GET' || req.method === 'HEAD') && reqPath === JS_PATH) {
-    return noCache(res, 'application/javascript; charset=utf-8', scriptForName('WebDAV n2s'), req.method === 'HEAD');
+    return noCache(res, 'application/javascript; charset=utf-8', scriptForName('n2s Cloude'), req.method === 'HEAD');
   }
   if ((req.method === 'GET' || req.method === 'HEAD') && (reqPath === VIDEO_JS_PATH || reqPath === VIDEO_CSS_PATH)) {
     const isJs = reqPath === VIDEO_JS_PATH;
