@@ -150,28 +150,74 @@
   function colorOf(el, property) {
     return el ? rgb(getComputedStyle(el)[property]) : null;
   }
+  // WebDAV FS PRO can render its toolbar/header as anonymous <div> nodes.
+  // Detect the *visible* palette first, rather than assuming header/nav tags.
+  // elementFromPoint samples the native page before we append our dialog.
+  function surfaceAt(x, y) {
+    if (typeof document.elementFromPoint !== 'function') return null;
+    const w = window.innerWidth || document.documentElement.clientWidth || 400;
+    const h = window.innerHeight || document.documentElement.clientHeight || 800;
+    let node = document.elementFromPoint(
+      Math.min(Math.max(1, Math.round(x*w)), Math.max(1,w-1)),
+      Math.min(Math.max(1, Math.round(y*h)), Math.max(1,h-1))
+    );
+    while (node && node !== document.body && node !== document.documentElement) {
+      if (!(node instanceof Element) || node.closest('.n2s-video-shade,.n2s-video-pick')) {
+        node=node.parentElement;
+        continue;
+      }
+      const candidate=colorOf(node,'backgroundColor');
+      if (candidate) return candidate;
+      node=node.parentElement;
+    }
+    return null;
+  }
   function nativePalette() {
-    const header = [...document.querySelectorAll('header, [role="banner"], [class*="header"], [class*="Header"]')]
-      .find(el=>!el.closest('.n2s-video-shade') && colorOf(el,'backgroundColor'));
-    const toolbar = [...document.querySelectorAll('nav, [role="toolbar"], [class*="toolbar"], [class*="Toolbar"]')]
-      .find(el=>!el.closest('.n2s-video-shade') && colorOf(el,'backgroundColor'));
-    const panel = colorOf(header,'backgroundColor') ||
-      colorOf(toolbar,'backgroundColor') ||
-      colorOf(document.body,'backgroundColor') || [47,57,74];
-    const button = [...document.querySelectorAll('main button, [role="main"] button, [role="toolbar"] button, nav button')]
-      .find(el=>!el.closest('.n2s-video-shade') && colorOf(el,'backgroundColor'));
-    const base = colorOf(button,'backgroundColor') || colorOf(toolbar,'backgroundColor') || mix(panel,luminance(panel)>.35?[0,0,0]:[255,255,255],.10);
-    const light = luminance(panel) > .24;
-    const fg = light ? [28,34,44] : [247,249,252];
-    const muted = light ? [73,81,93] : [196,204,216];
+    const root = document.body;
+    // Center of the original header and of a file card.
+    const headerSample=surfaceAt(.47,.11);
+    const fileSample=surfaceAt(.47,.44);
+    const fallbackHeader = [...document.querySelectorAll('header, [role="banner"], [class*="header"], [class*="Header"]')]
+      .filter(el=>!el.closest('.n2s-video-shade'))
+      .map(el=>colorOf(el,'backgroundColor')).find(Boolean);
+    const fallbackToolbar = [...document.querySelectorAll('nav, [role="toolbar"], [class*="toolbar"], [class*="Toolbar"]')]
+      .filter(el=>!el.closest('.n2s-video-shade'))
+      .map(el=>colorOf(el,'backgroundColor')).find(Boolean);
+    const bodyColor=colorOf(root,'backgroundColor');
+    const htmlColor=colorOf(document.documentElement,'backgroundColor');
+
+    // A visible light card or page must override the legacy blue fallback.
+    // WebDAV FS PRO frequently uses unlabelled divs for its main toolbar.
+    let panel=headerSample || fallbackHeader || fileSample ||
+      bodyColor || htmlColor || fallbackToolbar || [47,57,74];
+    const lightPage=[fileSample,bodyColor,htmlColor].some(c=>c && luminance(c)>.58);
+    const darkPage=[fileSample,bodyColor,htmlColor].some(c=>c && luminance(c)<.12);
+    if (lightPage && luminance(panel)<.24 && fileSample && luminance(fileSample)>.58) {
+      panel=fileSample;
+    } else if (darkPage && !lightPage && luminance(panel)>.58 && fileSample && luminance(fileSample)<.12) {
+      panel=fileSample;
+    }
+    const light=luminance(panel)>.35;
+    // Native buttons may be lighter or darker than the header. Avoid
+    // selecting an action button from a totally different dialog.
+    const candidates=[...document.querySelectorAll('main button, [role="main"] button, [role="toolbar"] button, nav button')];
+    const button=candidates.find(el=>!el.closest('.n2s-video-shade') && colorOf(el,'backgroundColor'));
+    let base=colorOf(button,'backgroundColor') ||
+      (light ? mix(panel,[255,255,255],.42) : mix(panel,[255,255,255],.12));
+    // Ensure foreground readability even if the sampled button is inverted.
+    if ((luminance(base)>.35)!==light) {
+      base=light?mix(panel,[255,255,255],.42):mix(panel,[255,255,255],.12);
+    }
+    const fg=light?[30,37,50]:[247,249,252];
+    const muted=light?[79,89,104]:[196,204,216];
     return {
       panel:asRgb(panel),
       button:asRgb(base),
-      hover:asRgb(mix(base,light?[0,0,0]:[255,255,255],.12)),
-      border:asRgb(mix(base,light?[0,0,0]:[255,255,255],.20)),
+      hover:asRgb(mix(base,light?[0,0,0]:[255,255,255],.10)),
+      border:asRgb(mix(base,light?[40,54,73]:[255,255,255],.22)),
       text:asRgb(fg),
       muted:asRgb(muted),
-      accent:asRgb(mix(panel,light?[0,0,0]:[255,255,255],.55)),
+      accent:asRgb(light?[57,82,119]:[142,184,236]),
       radius:'12px'
     };
   }
@@ -262,7 +308,15 @@
   }
 
   // Also update when the user changes theme while the dialog stays open.
-  const paletteObserver = new MutationObserver(() => { if (menu) applyPlayerPalette(menu); });
+  let paletteTimer=0;
+  function refreshPaletteSoon() {
+    if (!menu || paletteTimer) return;
+    paletteTimer=setTimeout(() => {
+      paletteTimer=0;
+      if (menu) applyPlayerPalette(menu);
+    },80);
+  }
+  const paletteObserver = new MutationObserver(refreshPaletteSoon);
   if (document.documentElement) paletteObserver.observe(document.documentElement, {attributes:true,attributeFilter:['data-n2s-theme','class','style']});
   if (document.body) paletteObserver.observe(document.body, {attributes:true,attributeFilter:['data-theme','class','style']});
   window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (menu) applyPlayerPalette(menu); });
@@ -271,6 +325,14 @@
   for (const nativeSurface of document.querySelectorAll('header, [role="banner"], nav, [role="toolbar"]')) {
     paletteObserver.observe(nativeSurface, {attributes:true,attributeFilter:['class','style','data-theme']});
   }
+
+  // React when the built-in WebDAV appearance menu applies its theme asynchronously.
+  document.addEventListener('click', event => {
+    if (menu || (event.target instanceof Element && !event.target.closest('.n2s-video-ui'))) {
+      setTimeout(refreshPaletteSoon,150);
+      setTimeout(refreshPaletteSoon,450);
+    }
+  },false);
 
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') dismiss();
