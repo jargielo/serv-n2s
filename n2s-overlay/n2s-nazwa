@@ -1,0 +1,16 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -e
+if [ "$#" -eq 0 ]; then
+  echo 'Użycie: n2s-nazwa "MOJA CHMURA"'
+  exit 1
+fi
+NAME="$*"
+if [ "${#NAME}" -gt 50 ] || [ "${#NAME}" -lt 2 ] || [[ "$NAME" == *$'\n'* ]] || [[ "$NAME" == *$'\r'* ]]; then
+  echo 'Nazwa powinna mieć 2–50 znaków, bez nowych linii.'
+  exit 1
+fi
+mkdir -p "$HOME/.config/n2s-overlay"
+printf '%s\n' "$NAME" > "$HOME/.config/n2s-overlay/name.txt"
+chmod 600 "$HOME/.config/n2s-overlay/name.txt"
+echo "Ustawiono nazwę: $NAME"
+echo 'Odśwież stronę serwera w przeglądarce.'
