@@ -42,11 +42,11 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   // Do not redirect non-browser WebDAV requests, including GET without HTML accept.
   const landing=await request('/','GET',false,null,'text/html,application/xhtml+xml');
   assert.equal(landing.status,302,'browser homepage redirects to standalone file manager');
-  assert.equal(landing.headers.location,'/n2s_cloude');
+  assert.equal(landing.headers.location,'/n2s_cloude#');
   assert.equal(landing.headers['cache-control'],'no-store');
   const navigateWithAuth=await request('/','GET',true,null,'text/html');
   assert.equal(navigateWithAuth.status,302);
-  assert.equal(navigateWithAuth.headers.location,'/n2s_cloude');
+  assert.equal(navigateWithAuth.headers.location,'/n2s_cloude#');
   const apiRoot=await request('/','GET',true,null,'application/octet-stream');
   assert.equal(apiRoot.status,200,'non-browser root GET is unchanged');
   const rootQuery=await request('/?download=1','GET',true,null,'text/html');
@@ -99,7 +99,7 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   assert.doesNotMatch(html.body, /_n2s_overlay_2026\/themes\.css/);
   const appearance=await request('/_n2s_overlay_2026/wyglad');
   assert.equal(appearance.status,302);
-  assert.equal(appearance.headers.location,'/n2s_cloude');
+  assert.equal(appearance.headers.location,'/n2s_cloude#');
   for (const old of ['themes.js','themes.css','themes/amoled.svg','themes/catalyst.svg','themes/pro.svg']) {
     assert.equal((await request('/_n2s_overlay_2026/'+old)).status,404,'old theme retired: '+old);
   }
