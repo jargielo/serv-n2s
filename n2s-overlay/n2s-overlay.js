@@ -141,6 +141,10 @@ function requestHandler(req, res) {
   try { reqPath = new URL(req.url, 'http://localhost').pathname; }
   catch (_) { res.writeHead(400); res.end(); return; }
   if (mediaRoutes(req, res, reqPath)) return;
+  if ((req.method === 'GET' || req.method === 'HEAD') && reqPath === ASSET_PREFIX + 'wyglad') {
+    const themePage = `<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>N2S CLOUD — wybierz motyw</title><link rel="stylesheet" href="${THEME_CSS_PATH}"><style>html,body{min-height:100%;margin:0;background:#0c0d0f;color:#f8f8f8;font-family:system-ui,sans-serif}main{max-width:500px;margin:0 auto;padding:24px 18px 160px}h1{font-size:25px;margin:10px 0}p{color:#c3c7cc;line-height:1.5}a{color:#ff9b42}body .n2s-theme-root{position:static!important;padding:16px}body .n2s-theme-toggle{display:none!important}body .n2s-theme-panel{display:block!important;position:static!important;max-height:none!important;width:min(100%,500px)!important;box-sizing:border-box;margin:0 auto!important}body .n2s-theme-actions{display:none!important}</style></head><body><main><h1>N2S CLOUD — Motywy</h1><p>Wybierz wygląd. Zmiana zapisze się w tej przeglądarce.</p><p><a href="/">Powrót do plików</a></p></main><script defer src="${THEME_JS_PATH}"></script></body></html>`;
+    return noCache(res, 'text/html; charset=utf-8', themePage, req.method === 'HEAD');
+  }
   if (reqPath === ASSET_PREFIX + 'health') {
     return noCache(res, 'text/plain; charset=utf-8', 'N2S OK', req.method === 'HEAD');
   }
