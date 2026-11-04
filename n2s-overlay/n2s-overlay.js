@@ -11,6 +11,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
 const net = require('node:net');
+const createMediaRoutes = require('./n2s-media');
 
 const HOST = '127.0.0.1';
 const UPSTREAM_PORT = Number(process.env.N2S_UPSTREAM_PORT || 8080);
@@ -23,6 +24,7 @@ const JS_PATH = ASSET_PREFIX + 'brand.js';
 const VIDEO_JS_PATH = ASSET_PREFIX + 'video.js';
 const VIDEO_CSS_PATH = ASSET_PREFIX + 'video.css';
 const INJECT = `<link rel="stylesheet" href="${CSS_PATH}"><link rel="stylesheet" href="${VIDEO_CSS_PATH}"><script defer src="${JS_PATH}"></script><script defer src="${VIDEO_JS_PATH}"></script>`;
+const mediaRoutes = createMediaRoutes({host: HOST, port: UPSTREAM_PORT, prefix: ASSET_PREFIX});
 const HOP_HEADERS = ['connection', 'keep-alive', 'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade'];
 
 if (![UPSTREAM_PORT, PROXY_PORT].every(p => Number.isInteger(p) && p > 0 && p < 65536) || UPSTREAM_PORT === PROXY_PORT) {
@@ -136,6 +138,7 @@ function requestHandler(req, res) {
   let reqPath;
   try { reqPath = new URL(req.url, 'http://localhost').pathname; }
   catch (_) { res.writeHead(400); res.end(); return; }
+  if (mediaRoutes(req, res, reqPath)) return;
   if (reqPath === ASSET_PREFIX + 'health') {
     return noCache(res, 'text/plain; charset=utf-8', 'N2S OK', req.method === 'HEAD');
   }
