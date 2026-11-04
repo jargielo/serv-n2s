@@ -33,7 +33,7 @@ function makeDom(body) {
   return dom;
 }
 
-test('clicking a video file offers Android chooser, MX Player and VLC without exposing credentials', async () => {
+test('clicking a video file offers Android chooser, MX Player, Arc Player and VLC without exposing credentials', async () => {
   const dom = makeDom('<a id="film" href="/Filmy/film%20testowy.mkv">film testowy.mkv</a>');
   const {document, MouseEvent} = dom.window;
   const anchor = document.getElementById('film');
@@ -45,14 +45,15 @@ test('clicking a video file offers Android chooser, MX Player and VLC without ex
   assert.match(dialog.textContent, /Wybierz aplikację/);
   assert.match(dialog.textContent, /VLC/);
   const links = [...dialog.querySelectorAll('a[href^="intent:"]')];
-  assert.equal(links.length, 4);
+  assert.equal(links.length, 5);
   assert.ok(links[0].getAttribute('href').includes('film%20testowy.mkv'));
   assert.ok(links[0].getAttribute('href').includes('/media-stream/'));
   assert.ok(!links[0].getAttribute('href').includes('/Filmy/'));
   assert.match(links[1].getAttribute('href'), /com\.mxtech\.videoplayer\.ad/);
   assert.match(links[2].getAttribute('href'), /com\.mxtech\.videoplayer\.pro/);
   assert.match(links[0].getAttribute('href'), /action=android.intent.action.VIEW/);
-  assert.match(links[3].getAttribute('href'), /package=org\.videolan\.vlc/);
+  assert.match(links[3].getAttribute('href'), /package=com\\.videoplayer\\.arcplayer/);
+  assert.match(links[4].getAttribute('href'), /package=org\.videolan\.vlc/);
   assert.ok(!links[0].getAttribute('href').includes('@'));
 });
 
