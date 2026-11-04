@@ -93,6 +93,16 @@ while true; do
     echo 'Lokalnie nakladka pozostaje dostepna na http://127.0.0.1:8081/n2s_cloude'
   else
     echo 'OK: Publiczny tunel kieruje do N2S CLOUD.'
+    # Probe the actual browser landing route, not only the health endpoint.
+    PUBLIC_REDIRECT="$(curl -sS -o /dev/null -D - --connect-timeout 4 --max-time 8 \
+      -H 'Accept: text/html' 'https://jargielo.gh.srv.us/' 2>/dev/null \
+      | tr -d '\r' | grep -i '^location:' | tail -n 1 | sed -E 's/^[Ll]ocation:[[:space:]]*//' || true)"
+    if [ "$PUBLIC_REDIRECT" != '/n2s_cloude#' ]; then
+      echo "UWAGA: Strona glowna nie przekierowuje prawidlowo (Location: ${PUBLIC_REDIRECT:-brak})."
+      echo 'Sprawdz, czy nie dziala starsza nakladka lub drugi tunel.'
+    else
+      echo 'OK: Adres glowny kieruje do /n2s_cloude.'
+    fi
     echo 'Otworz: https://jargielo.gh.srv.us/n2s_cloude'
   fi
   while kill -0 "$TUNNEL_PID" 2>/dev/null; do
