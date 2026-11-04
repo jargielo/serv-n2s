@@ -29,6 +29,7 @@ function makeDom(body) {
       expiresInSeconds:14400
     })};
   };
+  dom.window.TextEncoder = global.TextEncoder;
   dom.window.eval(script);
   return dom;
 }
