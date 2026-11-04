@@ -80,7 +80,7 @@ test('temporary video stream supports MX Player without putting WebDAV credentia
   const grant=await request(GRANT,'POST',{...headers,Authorization:AUTH},payload);
   assert.equal(grant.status,201,'authenticated request creates a video URL');
   const url=grant.json.url;
-  assert.match(url,/^\/_n2s_overlay_2026\/media-stream\/[A-Za-z0-9_-]{43}\/film_testowy\.mkv$/);
+  assert.match(url,/^\/_n2s_overlay_2026\/media-stream\/[A-Za-z0-9_-]{43}\/film%20testowy\.mkv$/);
   assert.ok(!url.includes('test') || url.endsWith('film%20testowy.mkv'));
   assert.ok(!url.includes('dGVzdDp0ZXN0'));
   assert.equal(grant.json.expiresInSeconds, 14400);
