@@ -8,7 +8,9 @@ if ((location.pathname === '/n2s_cloude' || location.pathname === '/n2s_cloude/'
 }
 const root=document.getElementById('n2s-app');
 const styles={dark:'Dark',light:'Light'};
-const state={theme:'dark',dir:'/',files:[],filter:'',view:'grid',busy:false,zoom:100};
+const state={theme:'dark',dir:'/',files:[],filter:'',view:'grid',busy:false,zoom:100,player:'ask'};
+const PLAYERS={ask:'Pytaj zawsze',system:'Wybierz aplikację',vlc:'VLC',mx:'MX Player',mxpro:'MX Player Pro',arc:'Arc Player'};
+try{const val=localStorage.getItem('n2s.app.player');if(Object.hasOwn(PLAYERS,val))state.player=val}catch{}
 try{
  const storedZoom=Number(localStorage.getItem('n2s.app.zoom'));
  if(Number.isFinite(storedZoom) && storedZoom>=75 && storedZoom<=150 && storedZoom%5===0)state.zoom=storedZoom;
@@ -96,14 +98,20 @@ function trail(){const box=mk('div','crumb');box.append(btn('Mój dysk','',()=>b
 function openFile(file){
  if(file.folder){state.filter='';browse(file.href);return}
  if(VIDEO.test(file.name)){
-  const a=mk('a');a.href=file.href;a.textContent=file.name;a.style.display='none';document.body.append(a);a.click();setTimeout(()=>a.remove(),250);return;
+  const opened=typeof window.n2sOpenPlayer==='function' &&
+    window.n2sOpenPlayer(new URL(file.href,location.origin).href,{
+      preferred:state.player,
+      playNative:()=>window.location.assign(file.href)
+    });
+  if(!opened)toast('Moduł odtwarzacza nie jest dostępny. Odśwież stronę.');
+  return;
  }
  window.open(file.href,'_blank','noopener,noreferrer');
 }
 function popMenu(file){
  document.querySelector('.menu')?.remove();
  const menu=mk('div','menu');
- const actions=[['Otwórz',()=>openFile(file)],['Pobierz',()=>{const a=mk('a');a.href=file.href;a.download=file.name;document.body.append(a);a.click();a.remove()}],['Kopiuj adres',async()=>{try{await navigator.clipboard.writeText(new URL(file.href,location.href).href);toast('Skopiowano adres')}catch{toast('Kopiowanie niedostępne')}}],['Zmień nazwę',()=>rename(file)],['Usuń',()=>remove(file)]];
+ const actions=[['Otwórz',()=>openFile(file)],...(VIDEO.test(file.name)?[['Wybierz odtwarzacz',()=>openFile(file)]]:[]),['Pobierz',()=>{const a=mk('a');a.href=file.href;a.download=file.name;document.body.append(a);a.click();a.remove()}],['Kopiuj adres',async()=>{try{await navigator.clipboard.writeText(new URL(file.href,location.href).href);toast('Skopiowano adres')}catch{toast('Kopiowanie niedostępne')}}],['Zmień nazwę',()=>rename(file)],['Usuń',()=>remove(file)]];
  for(const [label,fn]of actions)menu.append(btn(label,'',()=>{menu.remove();fn()}));
  document.body.append(menu);setTimeout(()=>{const closer=e=>{if(!menu.contains(e.target)){menu.remove();document.removeEventListener('pointerdown',closer,true)}};document.addEventListener('pointerdown',closer,true)},20);
 }
@@ -124,6 +132,24 @@ function filesView(){
  return box;
 }
 function renderFiles(){const slot=document.getElementById('n2s-files');if(slot)slot.replaceChildren(filesView())}
+function playerControls(){
+ const wrap=mk('label','player-controls');
+ const caption=mk('span','player-caption','Odtwarzacz');
+ const select=mk('select','player-select');
+ select.id='n2s-default-player';
+ select.setAttribute('aria-label','Preferowany odtwarzacz wideo');
+ for(const [value,label] of Object.entries(PLAYERS)){
+   const option=mk('option','',label);
+   option.value=value;option.selected=state.player===value;
+   select.append(option);
+ }
+ select.addEventListener('change',()=>{
+   state.player=select.value;
+   try{localStorage.setItem('n2s.app.player',state.player)}catch{}
+   toast('Odtwarzacz: '+PLAYERS[state.player]);
+ });
+ return append(wrap,caption,select);
+}
 function header(){
  const h=mk('header');const logo=append(mk('div','brand'),mk('span','','N2S '),mk('b','','CLOUD'));
  const search=mk('input','search');search.placeholder='Szukaj w folderze';search.value=state.filter;search.setAttribute('aria-label','Szukaj w folderze');search.addEventListener('input',()=>{state.filter=search.value;renderFiles()});
@@ -141,6 +167,7 @@ function side(){
 }
 function bar(){
  const box=mk('div','bar');append(box,trail(),btn('↻','btn',()=>browse()),btn('＋ Folder','btn',newFolder),btn('⬆ Prześlij','btn primary',()=>document.getElementById('n2s-upload').click()));
+ box.append(playerControls());
  const view=btn(state.view==='grid'?'☰ Lista':'▦ Siatka','btn',()=>{state.view=state.view==='grid'?'list':'grid';render()});box.append(view);return box;
 }
 function stats(){
