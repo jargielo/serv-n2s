@@ -20,6 +20,17 @@ test('standalone app switches three layouts and lists real WebDAV XML',async()=>
  window.eval(appSource);
  await new Promise(done=>setTimeout(done,50));
  const doc=window.document;
+ const zoom=doc.querySelector('#n2s-zoom-slider');
+ assert.ok(zoom,'slider for page scaling');
+ assert.equal(zoom.value,'100');
+ zoom.value='125';
+ zoom.dispatchEvent(new window.Event('input',{bubbles:true}));
+ assert.equal(doc.querySelector('#n2s-zoom-value').textContent,'125%');
+ assert.equal(doc.querySelector('#n2s-app').style.zoom,'1.25');
+ assert.equal(window.localStorage.getItem('n2s.app.zoom'),'125');
+ doc.querySelector('#n2s-zoom-value').click();
+ assert.equal(doc.querySelector('#n2s-app').style.zoom,'1');
+ assert.equal(doc.querySelector('#n2s-zoom-value').textContent,'100%');
  assert.equal(calls[0].method,'PROPFIND');
  assert.equal(calls[0].url,'/');
  assert.equal(doc.querySelectorAll('.tile').length,3);
