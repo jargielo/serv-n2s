@@ -11,7 +11,7 @@ for FILE in n2s-overlay.js n2s n2s-nazwa; do
   printf 'Pobieram %s...\n' "$FILE"
   curl -fLsS --connect-timeout 15 --max-time 60 "$REPO/$FILE" -o "$TARGET/$FILE.new"
 done
-node --check "$TARGET/n2s-overlay.js.new"
+node --check --input-type=commonjs < "$TARGET/n2s-overlay.js.new"
 bash -n "$TARGET/n2s.new"
 bash -n "$TARGET/n2s-nazwa.new"
 for FILE in n2s-overlay.js n2s n2s-nazwa; do
