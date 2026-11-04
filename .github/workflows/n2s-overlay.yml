@@ -41,3 +41,5 @@ jobs:
         run: node --test n2s-overlay/tests/themes.test.js
       - name: Test independent UI
         run: node --test n2s-overlay/tests/independent.test.js
+      - name: Test original WebDAV branding and icons
+        run: node --test n2s-overlay/tests/branding.test.js
