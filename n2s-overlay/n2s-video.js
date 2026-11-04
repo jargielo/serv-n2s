@@ -337,7 +337,7 @@
     }
   }
 
-  function openMenu(url, playNative) {
+  function openMenu(url, playNative, preferred = 'ask') {
     dismiss();
     const shade = elt('div', MARKER + ' n2s-video-shade');
     shade.setAttribute('role', 'presentation');
@@ -363,11 +363,24 @@
       temporaryMediaUrl(url).then(streamUrl => {
         if (menu !== shade) return;
         area.replaceChildren();
-        area.appendChild(linkRow('Wybierz aplikację', 'Wybierz dowolny zgodny odtwarzacz na Androidzie', intentUrl(streamUrl)));
-        area.appendChild(linkRow('MX Player', 'Bezpłatna wersja MX Player', intentUrl(streamUrl, 'com.mxtech.videoplayer.ad')));
-        area.appendChild(linkRow('MX Player Pro', 'Płatna wersja MX Player', intentUrl(streamUrl, 'com.mxtech.videoplayer.pro')));
-        area.appendChild(linkRow('Arc Player', 'Otwórz w Arc Player na Androidzie (wymaga zainstalowanej aplikacji)', intentUrl(streamUrl, 'com.videoplayer.arcplayer')));
-        area.appendChild(linkRow('VLC', 'Otwórz w VLC na Androidzie', intentUrl(streamUrl, 'org.videolan.vlc')));
+        const choices=[
+          ['system','Wybierz aplikację','Dowolny zgodny odtwarzacz na Androidzie',intentUrl(streamUrl)],
+          ['mx','MX Player','Bezpłatna wersja MX Player',intentUrl(streamUrl, 'com.mxtech.videoplayer.ad')],
+          ['mxpro','MX Player Pro','Płatna wersja MX Player',intentUrl(streamUrl, 'com.mxtech.videoplayer.pro')],
+          ['arc','Arc Player','Wymaga zainstalowanej aplikacji',intentUrl(streamUrl, 'com.videoplayer.arcplayer')],
+          ['vlc','VLC','Otwórz w VLC na Androidzie',intentUrl(streamUrl, 'org.videolan.vlc')]
+        ];
+        if (choices.some(entry=>entry[0]===preferred)) {
+          choices.sort((a,b)=>Number(b[0]===preferred)-Number(a[0]===preferred));
+        }
+        for(const [id,label,hint,href] of choices) {
+          const entry=linkRow(label,hint,href);
+          if(id===preferred){
+            entry.classList.add('is-preferred');
+            entry.setAttribute('aria-label',label+' — preferowany odtwarzacz');
+          }
+          area.appendChild(entry);
+        }
         const copy = menuRow('Kopiuj adres tymczasowy', 'Przydatne w odtwarzaczach sieciowych');
         copy.addEventListener('click', async () => {
           try {
@@ -404,6 +417,19 @@
     menu = shade;
     close.focus();
   }
+
+  // Public API for the independent /n2s_cloude UI. No simulated
+  // DOM clicks: always use the canonical authenticated media grant flow.
+  window.n2sOpenPlayer = function(fileUrl, options={}) {
+    const direct=absoluteMediaUrl(fileUrl);
+    if(!direct || !EXT.test(new URL(direct).pathname))return false;
+    const preferred=['ask','system','vlc','mx','mxpro','arc'].includes(options.preferred)
+      ? options.preferred : 'ask';
+    openMenu(direct,typeof options.playNative==='function' ? options.playNative : ()=>{
+      window.location.assign(direct);
+    },preferred);
+    return true;
+  };
 
   // Also update when the user changes theme while the dialog stays open.
   let paletteTimer=0;
