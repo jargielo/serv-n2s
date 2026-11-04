@@ -246,3 +246,38 @@ test('manual player chooser shows an understandable notice when folder is empty'
  await new Promise(done=>setTimeout(done,25));
  assert.match(doc.querySelector('.n2s-video-dialog').textContent,/Nie znaleziono filmów/);
 });
+
+test('media grant 401 opens masked login and retries with WebDAV authentication', async () => {
+  const dom=makeDom('<a id="film" href="/Bajki/test.mp4">Film</a>');
+  const {window}=dom, document=window.document;
+  const requests=[];
+  window.fetch=async (url,options)=>{
+    assert.equal(url,'/_n2s_overlay_2026/media-grant');
+    requests.push(options);
+    if(!options.headers.Authorization) return {status:401,ok:false,json:async()=>({error:'Zaloguj się do WebDAV'})};
+    assert.equal(options.headers.Authorization,'Basic '+Buffer.from('test:hasło','utf8').toString('base64'));
+    return {status:201,ok:true,json:async()=>({url:'/_n2s_overlay_2026/media-stream/'+('a'.repeat(43))+'/test.mp4'})};
+  };
+  document.getElementById('film').dispatchEvent(new window.MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
+  await new Promise(resolve=>setTimeout(resolve,25));
+  const authForm=document.querySelector('.n2s-auth-form');
+  assert.ok(authForm,'masked login shown when WebDAV authentication is not forwarded');
+  const pass=authForm.querySelector('input[name=password]');
+  assert.equal(pass.type,'password');
+  authForm.querySelector('input[name=username]').value='test';
+  pass.value='hasło';
+  authForm.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
+  await new Promise(resolve=>setTimeout(resolve,40));
+  assert.equal(requests.length,2);
+  assert.equal(document.querySelector('.n2s-auth-form'),null);
+  assert.equal(document.querySelectorAll('.n2s-video-links a[href^="intent:"]').length,5);
+  assert.equal(document.body.textContent.includes('hasło'),false);
+  assert.equal(document.body.innerHTML.includes('dGVzdDpoYXM'),false);
+});
+test('independent app bundles video dialog CSS even if standalone video stylesheet is unavailable',()=>{
+  const css=fs.readFileSync(path.resolve(__dirname,'../app.css'),'utf8');
+  assert.match(css,/\.n2s-video-shade\s*\{/);
+  assert.match(css,/\.n2s-video-dialog\s*\{/);
+  assert.match(css,/\.n2s-video-action\s*\{/);
+  assert.match(css,/\.n2s-auth-shade\s*\{/);
+});
