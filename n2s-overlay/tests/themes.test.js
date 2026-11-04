@@ -14,6 +14,9 @@ test('all three themes update live and persist without removing any WebDAV files
   await new Promise(resolve => setTimeout(resolve, 30));
   const {document,localStorage} = dom.window;
   assert.equal(document.querySelectorAll('.n2s-theme-card').length, 3);
+  const launch=document.querySelector('.n2s-app-launch');
+  assert.ok(launch, 'standalone app launcher is visible on old UI');
+  assert.equal(launch.textContent, 'Nowy interfejs');
   for (const name of ['amoled','catalyst','pro']) {
     document.querySelector('.n2s-theme-card[data-theme="'+name+'"]').click();
     assert.equal(document.documentElement.dataset.n2sTheme,name);
