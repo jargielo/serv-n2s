@@ -1,4 +1,4 @@
-# N2S CLOUD — niezależny interfejs WWW (3 układy)
+# N2S CLOUD — niezależny interfejs WWW (Dark / Light)
 
 Nowa aplikacja WWW działa **obok** oryginalnej strony WebDAV FS PRO.
 
@@ -12,15 +12,16 @@ Oryginalny WebDAV FS PRO jest nadal dostępny pod `http://127.0.0.1:8080/`
 oraz pod `https://jargielo.gh.srv.us/`. Ta wersja nie zmienia domyślnego
 adresu strony, aby nie ryzykować uszkodzenia klientów WebDAV.
 
-## Trzy układy
+## Dwa minimalistyczne motywy
 
-1. **AMOLED Files** — mobilny, czarny interfejs z dużą listą plików.
-2. **Catalyst Dark** — grafitowy dashboard, karty i statystyki bieżącego katalogu.
-3. **File Manager Pro** — zwarty, administracyjny widok z listą plików i bocznym menu.
+1. **Dark** — ciemne grafitowe tło, jasne teksty i monochromatyczne ikony.
+2. **Light** — jasne tło, ciemne teksty i monochromatyczne ikony.
 
-Przełącznik znajduje się **na górnym pasku**, po prawej stronie wyszukiwarki.
-Na telefonach dostępny jest też przycisk **Motyw** na dolnej belce.
-Wybór zapisuje się lokalnie w przeglądarce.
+Oba warianty korzystają z tego samego układu, listy i siatki plików.
+Wybór znajduje się na górnym pasku albo przy przycisku **Motyw** na dolnej belce.
+Wybór zostaje zapisany lokalnie. Stare motywy AMOLED Files,
+Catalyst Dark i File Manager Pro zostały usunięte. Poprzednio zapamiętany
+motyw jest zastępowany motywem Dark.
 
 ## Skalowanie
 
@@ -70,7 +71,7 @@ na konkretnym telefonie.
 ## Testy
 
 GitHub Actions sprawdza: składnię Node/Bash, uwierzytelnienie pod `/app`,
-zachowanie proxy WebDAV, obsługę filmu i Range, przełączanie motywów,
+zachowanie proxy WebDAV, obsługę filmu i Range, przełączanie Dark/Light,
 a także parser `PROPFIND` i wyszukiwarkę na XML o strukturze WebDAV.
 Są to testy automatyczne; nie oznaczają testu wizualnego na prawdziwym
 Samsungu S24 Ultra.
