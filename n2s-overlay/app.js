@@ -1,5 +1,11 @@
 (() => {
 'use strict';
+// Normalize stale WebDAV hash routes carried over by browsers/bookmarks.
+// The independent N2S app uses path-based URLs, not SPA fragments.
+if ((location.pathname === '/n2s_cloude' || location.pathname === '/n2s_cloude/' ||
+     location.pathname === '/_n2s_overlay_2026/app') && location.hash) {
+  try { history.replaceState(history.state, '', location.pathname + location.search); } catch (_) {}
+}
 const root=document.getElementById('n2s-app');
 const styles={dark:'Dark',light:'Light'};
 const state={theme:'dark',dir:'/',files:[],filter:'',view:'grid',busy:false,zoom:100};
