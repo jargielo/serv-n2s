@@ -5,6 +5,19 @@
   'use strict';
   if (window.__n2sThemesInstalled) return;
   window.__n2sThemesInstalled = true;
+  // Rescue links mistakenly routed inside WebDAV FS PRO's hash-based router.
+  // Browsers never send the # fragment to the server, so the native SPA shows 404.
+  const APP_PATH='/_n2s_overlay_2026/app';
+  function repairOldHashRoute() {
+    const frag=window.location.hash || '';
+    if (/^#\/?_n2s_overlay_2026\/app\/?(?:[?#]|$)/.test(frag)) {
+      window.location.replace(window.location.origin+APP_PATH);
+      return true;
+    }
+    return false;
+  }
+  if (repairOldHashRoute()) return;
+  window.addEventListener('hashchange',repairOldHashRoute);
   const KEY = 'n2s.ui.theme.v1';
   const THEMES = [
     {id:'amoled', title:'AMOLED Files', note:'Czerń, duże wiersze i niebieskie ikony. Telefon.'},
@@ -100,6 +113,19 @@
     document.addEventListener('keydown',e=>{
       if(e.key==='Escape'&&!panel.hidden) open(false);
     });
+    // Direct, native-location navigation. Never let the WebDAV SPA router
+    // reinterpret the new interface as /#/a-folder.
+    if (location.pathname !== APP_PATH && location.pathname !== APP_PATH+'/') {
+      const launch=make('button','n2s-app-launch','Nowy interfejs');
+      launch.type='button';
+      launch.title='Otwórz nowy N2S CLOUD z trzema układami';
+      launch.addEventListener('click',event=>{
+        event.preventDefault();
+        event.stopPropagation();
+        window.location.assign(window.location.origin+APP_PATH);
+      });
+      root.appendChild(launch);
+    }
     root.append(activeBadge,toggle,panel);
     document.body.appendChild(root);
     setTheme(chosen);
