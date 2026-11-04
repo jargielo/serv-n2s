@@ -23,6 +23,32 @@ test('removes stale WebDAV hash route from independent N2S browser URL',async()=
  assert.ok(window.document.querySelector('.layout'));
  window.close();
 });
+test('N2S CLOUD offers saved video player preference and direct selection from film rows',async()=>{
+ const dom=new JSDOM('<!doctype html><html><body><div id="n2s-app"></div></body></html>',{
+  url:'https://jargielo.gh.srv.us/n2s_cloude',runScripts:'outside-only'
+ });
+ const {window}=dom;
+ const opened=[];
+ window.fetch=async()=>({status:207,ok:true,text:async()=>xml});
+ window.n2sOpenPlayer=(url,options)=>{opened.push({url,preferred:options.preferred});return true};
+ window.eval(appSource);
+ await new Promise(resolve=>setTimeout(resolve,50));
+ const doc=window.document;
+ const select=doc.querySelector('#n2s-default-player');
+ assert.ok(select);
+ assert.deepEqual([...select.options].map(o=>o.value),['ask','system','vlc','mx','mxpro','arc']);
+ select.value='vlc';
+ select.dispatchEvent(new window.Event('change',{bubbles:true}));
+ assert.equal(window.localStorage.getItem('n2s.app.player'),'vlc');
+ const video=[...doc.querySelectorAll('.mainbtn')].find(x=>x.textContent.includes('film testowy.mkv'));
+ assert.ok(video);
+ video.click();
+ assert.equal(opened.length,1);
+ assert.equal(opened[0].preferred,'vlc');
+ assert.match(opened[0].url,/film%20testowy.mkv$/);
+ assert.equal(doc.querySelector('.n2s-video-dialog'),null,'player API owns the dialog');
+ window.close();
+});
 test('standalone app switches only Dark and Light and lists real WebDAV XML',async()=>{
  const dom=new JSDOM('<!doctype html><html lang="pl"><body><div id="n2s-app"></div></body></html>',{url:'https://jargielo.gh.srv.us/_n2s_overlay_2026/app',runScripts:'outside-only'});
  const {window}=dom;
