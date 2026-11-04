@@ -33,10 +33,11 @@ if [ ! -s "$HOME/.config/n2s-overlay/name.txt" ]; then
   chmod 600 "$HOME/.config/n2s-overlay/name.txt"
 fi
 
-printf '\nZainstalowano nakładkę. WebDAV FS PRO musi być uruchomiony na porcie 8080.\n'
-printf 'Stary tunel "serwer" należy wcześniej zatrzymać przez CTRL+C.\n'
+printf '\nZainstalowano nakładkę. WebDAV FS PRO musi być najpierw przełączony w aplikacji na port 8081 i zabezpieczony hasłem.\n'
+printf 'N2S CLOUD uruchomi się na porcie 8080. Stary tunel należy zatrzymać przez CTRL+C.\n'
 printf 'Po restarcie nakladki opcja Wybierz odtwarzacz pojawi sie przy filmach.\n'
 printf 'Nowy interfejs: https://jargielo.gh.srv.us/n2s_cloude\n'
+printf 'Porty: N2S CLOUD 8080, WebDAV FS PRO 8081.\n'
 printf 'Uruchamianie: n2s\n'
 printf 'Zmiana nazwy: n2s-nazwa "MOJA CHMURA"\n\n'
 exec "$PREFIX/bin/n2s"
