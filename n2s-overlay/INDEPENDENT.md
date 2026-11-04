@@ -4,9 +4,9 @@ Nowa aplikacja WWW działa **obok** oryginalnej strony WebDAV FS PRO.
 
 Adres publiczny (przy aktywnym tunelu `n2s`):
 
-**https://jargielo.gh.srv.us/_n2s_overlay_2026/app**
+**https://jargielo.gh.srv.us/n2s_cloude**
 
-Adres lokalny: `http://127.0.0.1:8081/_n2s_overlay_2026/app`.
+Adres lokalny: `http://127.0.0.1:8081/n2s_cloude`.
 
 Oryginalny WebDAV FS PRO jest nadal dostępny pod `http://127.0.0.1:8080/`
 oraz pod `https://jargielo.gh.srv.us/`. Ta wersja nie zmienia domyślnego
@@ -21,6 +21,12 @@ adresu strony, aby nie ryzykować uszkodzenia klientów WebDAV.
 Przełącznik znajduje się **na górnym pasku**, po prawej stronie wyszukiwarki.
 Na telefonach dostępny jest też przycisk **Motyw** na dolnej belce.
 Wybór zapisuje się lokalnie w przeglądarce.
+
+## Skalowanie
+
+Na pasku aplikacji dostępne są przyciski `−` / `+`, suwak i procentowe wskazanie skali.
+Zakres: **75–150%**, zmiana co 5%. Kliknięcie `100%` (lub aktualnej wartości) przywraca domyślny rozmiar.
+Ustawienia są zapisywane w tej przeglądarce osobno od motywu.
 
 ## Działające funkcje
 
@@ -46,7 +52,7 @@ Uruchom WebDAV FS PRO (port 8080, z wymaganym loginem i hasłem).
 curl -fsSL https://raw.githubusercontent.com/jargielo/serv-n2s/main/n2s-overlay/install-overlay.sh -o "$HOME/n2s-installer.sh" && bash "$HOME/n2s-installer.sh"
 ```
 
-Po uruchomieniu wybierz adres `/_n2s_overlay_2026/app`.
+Po uruchomieniu wybierz adres `/n2s_cloude`.
 Pojawienie się okna logowania jest prawidłowe; używa danych WebDAV FS PRO.
 
 ## Bezpieczeństwo i zgodność
