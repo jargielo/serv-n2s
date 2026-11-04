@@ -42,6 +42,13 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   assert.equal((await request('/','PROPFIND')).status,401,'unauthenticated PROPFIND blocked');
   const deniedApp=await request('/_n2s_overlay_2026/app');
   assert.equal(deniedApp.status,401,'standalone app must require authentication');
+  const aliasNoAuth=await request('/n2s_cloude');
+  assert.equal(aliasNoAuth.status,401,'short alias must require WebDAV login');
+  const aliasAuth=await request('/n2s_cloude','GET',true);
+  assert.equal(aliasAuth.status,200,'short URL opens standalone N2S');
+  assert.match(aliasAuth.body,/N2S CLOUD/);
+  const aliasSlash=await request('/n2s_cloude/','GET',true);
+  assert.equal(aliasSlash.status,200);
   const ownApp=await request('/_n2s_overlay_2026/app','GET',true);
   assert.equal(ownApp.status,200);
   assert.match(ownApp.body,/N2S CLOUD/);
