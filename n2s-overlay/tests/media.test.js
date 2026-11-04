@@ -81,7 +81,7 @@ test('temporary video stream supports MX Player without putting WebDAV credentia
   assert.equal(grant.status,201,'authenticated request creates a video URL');
   const url=grant.json.url;
   assert.match(url,/^\/_n2s_overlay_2026\/media-stream\/[A-Za-z0-9_-]{43}\/film_testowy\.mkv$/);
-  assert.ok(!url.includes('test') || url.endsWith('film_testowy.mkv'));
+  assert.ok(!url.includes('test') || url.endsWith('film%20testowy.mkv'));
   assert.ok(!url.includes('dGVzdDp0ZXN0'));
   assert.equal(grant.json.expiresInSeconds, 14400);
 
@@ -97,7 +97,7 @@ test('temporary video stream supports MX Player without putting WebDAV credentia
   const head=await request(url,'HEAD');
   assert.equal(head.status,200);
   assert.equal(Number(head.headers['content-length']),VIDEO.length);
-  const badName=await request(url.replace('film_testowy.mkv','wrong.mkv'));
+  const badName=await request(url.replace('film%20testowy.mkv','wrong.mkv'));
   assert.equal(badName.status,404);
   const random=await request(url.replace(/media-stream\/[A-Za-z0-9_-]{43}/,'media-stream/'+('A'.repeat(43))));
   assert.equal(random.status,410);
