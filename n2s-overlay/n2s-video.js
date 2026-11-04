@@ -386,6 +386,111 @@
     }
   },false);
 
+
+  // Guaranteed entry point, independent of WebDAV FS PRO's SPA click handlers.
+  // The user can choose a video in the current WebDAV folder by PROPFIND and
+  // then open our existing player menu. No passwords or file lists are stored.
+  let manualButton=null;
+  function itemPath(raw) {
+    if (!raw) return null;
+    try {
+      const u=new URL(raw,location.origin);
+      if(u.origin!==location.origin &&
+         !((u.hostname==='localhost'||u.hostname==='127.0.0.1')&&u.port==='8080'))return null;
+      return u.pathname;
+    } catch (_) { return null; }
+  }
+  async function listCurrentVideos() {
+    const dir=currentFolderPath();
+    if (!dir) throw new Error('Najpierw otwórz folder z filmami.');
+    const reply=await fetch(dir,{
+      method:'PROPFIND',
+      credentials:'same-origin',
+      headers:{Depth:'1','Content-Type':'application/xml'}
+    });
+    if(reply.status===401||reply.status===403)
+      throw new Error('Zaloguj się ponownie do WebDAV.');
+    if(reply.status!==207)
+      throw new Error('Nie można pobrać filmów z folderu (HTTP '+reply.status+').');
+    const xml=new DOMParser().parseFromString(await reply.text(),'application/xml');
+    if(xml.querySelector('parsererror'))throw new Error('Nieprawidłowa lista plików WebDAV.');
+    const items=[];
+    for(const row of xml.getElementsByTagNameNS('*','response')){
+      const href=row.getElementsByTagNameNS('*','href')[0]?.textContent?.trim();
+      const pathname=itemPath(href);
+      if(!pathname||!pathname.startsWith(dir)||pathname===dir||pathname.endsWith('/'))continue;
+      const relative=pathname.slice(dir.length);
+      if(!relative||relative.includes('/'))continue; // no nested folders or path traversal
+      const prop=row.getElementsByTagNameNS('*','propstat')[0];
+      if(prop&&!/\b200\b/.test(prop.getElementsByTagNameNS('*','status')[0]?.textContent||''))continue;
+      const isCollection=[...row.getElementsByTagNameNS('*','collection')].length>0;
+      if(isCollection)continue;
+      let name;
+      try{name=decodeURIComponent(relative)}catch{continue}
+      if(!filenameFromText(name))continue;
+      items.push({name,url:location.origin+pathname});
+    }
+    return items.sort((a,b)=>a.name.localeCompare(b.name,'pl',{numeric:true}));
+  }
+  async function chooseFromFolder() {
+    dismiss();
+    const shade=elt('div',MARKER+' n2s-video-shade');
+    const dialog=elt('div','n2s-video-dialog');
+    dialog.setAttribute('role','dialog');
+    dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-label','Wybierz film i odtwarzacz');
+    dialog.appendChild(elt('div','n2s-video-heading','Wybierz film'));
+    const info=elt('p','n2s-video-warning','Pobieram filmy z bieżącego folderu WebDAV…');
+    dialog.appendChild(info);
+    const close=menuRow('Zamknij');
+    close.addEventListener('click',dismiss);
+    dialog.appendChild(close);
+    shade.appendChild(dialog);
+    applyPlayerPalette(shade);
+    shade.addEventListener('click',event=>{if(event.target===shade)dismiss()});
+    document.body.appendChild(shade);
+    menu=shade;
+    close.focus();
+    try {
+      const items=await listCurrentVideos();
+      if(menu!==shade)return;
+      if(!items.length){
+        info.textContent='Nie znaleziono filmów w tym folderze. Otwórz folder Filmy lub Seriale i spróbuj ponownie.';
+        return;
+      }
+      info.textContent='Wybierz plik, a następnie odtwarzacz:';
+      const list=elt('div','n2s-video-links');
+      for(const item of items){
+        const row=menuRow(item.name,'Wybierz aplikację do odtwarzania');
+        row.addEventListener('click',()=>openMenu(item.url,()=>{
+          location.assign(item.url);
+        }));
+        list.appendChild(row);
+      }
+      dialog.insertBefore(list,close);
+    } catch(error) {
+      if(menu===shade)info.textContent=error.message||'Nie można odczytać listy filmów.';
+    }
+  }
+  function attachManualPlayerButton() {
+    if(document.querySelector('#n2s-app') || manualButton || !document.body)return;
+    manualButton=elt('button','n2s-player-entry','▶ Odtwarzacz');
+    manualButton.type='button';
+    manualButton.setAttribute('aria-label','Wybierz film i własny odtwarzacz');
+    manualButton.addEventListener('click',event=>{
+      event.preventDefault();
+      event.stopPropagation();
+      const video=activeVideo();
+      const src=video?videoSource(video):null;
+      if(src)openMenu(src,()=>video.play().catch(()=>{}));
+      else chooseFromFolder();
+    });
+    document.body.appendChild(manualButton);
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',attachManualPlayerButton,{once:true});
+  else attachManualPlayerButton();
+
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') dismiss();
   }, true);
