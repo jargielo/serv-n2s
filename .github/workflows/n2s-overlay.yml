@@ -24,6 +24,7 @@ jobs:
           node --check n2s-overlay/n2s-overlay.js
           node --check n2s-overlay/n2s-video.js
           node --check n2s-overlay/n2s-media.js
+          node --check n2s-overlay/n2s-themes.js
           bash -n n2s-overlay/n2s
           bash -n n2s-overlay/n2s-nazwa
           bash -n n2s-overlay/install-overlay.sh
