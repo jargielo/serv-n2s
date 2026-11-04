@@ -6,11 +6,9 @@ Adres publiczny (przy aktywnym tunelu `n2s`):
 
 **https://jargielo.gh.srv.us/n2s_cloude**
 
-Adres lokalny: `http://127.0.0.1:8081/n2s_cloude`.
+Adres lokalny: `http://127.0.0.1:8080/n2s_cloude`.
 
-Oryginalny WebDAV FS PRO jest nadal dostępny pod `http://127.0.0.1:8080/`
-oraz pod `https://jargielo.gh.srv.us/`. Ta wersja nie zmienia domyślnego
-adresu strony, aby nie ryzykować uszkodzenia klientów WebDAV.
+Oryginalny silnik WebDAV FS PRO działa lokalnie pod `http://127.0.0.1:8081/`. N2S CLOUD działa na porcie `8080`; publiczna domena przekierowuje do `/n2s_cloude`. Klienci WebDAV korzystający z publicznej domeny nadal używają metod WebDAV przez nakładkę.
 
 ## Dwa minimalistyczne motywy
 
@@ -47,7 +45,7 @@ mogą kończyć się błędem odmowy dostępu.
 ## Instalacja/aktualizacja
 
 W Termuxie najpierw zatrzymaj poprzedni proces `n2s` przez `CTRL+C`.
-Uruchom WebDAV FS PRO (port 8080, z wymaganym loginem i hasłem).
+Najpierw w ustawieniach aplikacji WebDAV FS PRO zmień port serwera na **8081** i uruchom go z wymaganym loginem i hasłem. Następnie upewnij się, że port **8080** nie jest zajęty przez poprzedni serwer ani sesję `n2s`. Skrypt uruchomienia zatrzyma się bezpiecznie, jeśli WebDAV nie odpowiada na 8081 kodem `401` bez hasła. Nie potrafi sam zmienić portu wewnątrz aplikacji WebDAV FS PRO.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jargielo/serv-n2s/main/n2s-overlay/install-overlay.sh -o "$HOME/n2s-installer.sh" && bash "$HOME/n2s-installer.sh"
