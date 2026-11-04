@@ -14,8 +14,8 @@ const net = require('node:net');
 const createMediaRoutes = require('./n2s-media');
 
 const HOST = '127.0.0.1';
-const UPSTREAM_PORT = Number(process.env.N2S_UPSTREAM_PORT || 8080);
-const PROXY_PORT = Number(process.env.N2S_PROXY_PORT || 8081);
+const UPSTREAM_PORT = Number(process.env.N2S_UPSTREAM_PORT || 8081);
+const PROXY_PORT = Number(process.env.N2S_PROXY_PORT || 8080);
 const NAME_FILE = process.env.N2S_NAME_FILE || path.join(process.env.HOME || '.', '.config', 'n2s-overlay', 'name.txt');
 const MAX_HTML_BYTES = 4 * 1024 * 1024;
 const ASSET_PREFIX = '/_n2s_overlay_2026/';
