@@ -40,7 +40,7 @@ const VIDEO=/\.(mp4|mkv|avi|webm|mov|m4v|wmv|flv|ts|m2ts|mpeg|mpg|ogv)$/i;
 const IMAGE=/\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i;
 const AUDIO=/\.(flac|mp3|wav|m4a|aac|opus|ogg)$/i;
 const DOC=/\.(pdf|docx?|xlsx?|pptx?|odt|txt|md)$/i;
-const icon=e=>e.folder?'📁':VIDEO.test(e.name)?'🎬':IMAGE.test(e.name)?'🖼️':AUDIO.test(e.name)?'🎵':DOC.test(e.name)?'📄':'📦';
+const icon=e=>e.folder?'▱':VIDEO.test(e.name)?'▷':IMAGE.test(e.name)?'▧':AUDIO.test(e.name)?'♫':DOC.test(e.name)?'▤':'◇';
 const mk=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=String(text);return e};
 const btn=(text,cls,handler)=>{const e=mk('button',cls,text);e.type='button';if(handler)e.addEventListener('click',handler);return e};
 const append=(node,...children)=>{node.append(...children.filter(Boolean));return node};
@@ -119,7 +119,7 @@ function filesView(){
 }
 function renderFiles(){const slot=document.getElementById('n2s-files');if(slot)slot.replaceChildren(filesView())}
 function header(){
- const h=mk('header');const logo=append(mk('div','brand'),mk('span','','☁ N2S '),mk('b','','CLOUD'));
+ const h=mk('header');const logo=append(mk('div','brand'),mk('span','','N2S '),mk('b','','CLOUD'));
  const search=mk('input','search');search.placeholder='Szukaj w folderze';search.value=state.filter;search.setAttribute('aria-label','Szukaj w folderze');search.addEventListener('input',()=>{state.filter=search.value;renderFiles()});
  const select=mk('select','layout');select.title='Wybierz motyw';
  for(const [id,label] of Object.entries(styles)){const o=mk('option','',label);o.value=id;o.selected=state.theme===id;select.append(o)}
@@ -130,7 +130,7 @@ function side(){
  const n=mk('aside');n.append(mk('div','caption','Nawigacja'));
  const actions=[['▣  Pliki i foldery',()=>browse('/')],['↻  Odśwież',()=>browse()],['＋  Nowy folder',newFolder],['⬆  Prześlij',()=>document.getElementById('n2s-upload').click()]];
  for(const [name,fn]of actions)n.append(btn(name,'',fn));
- n.append(mk('div','caption','WebDAV FS PRO • prywatny serwer plików'));
+ n.append(mk('div','caption','Prywatny serwer plików WebDAV'));
  return n;
 }
 function bar(){
@@ -155,7 +155,7 @@ function render(){
 
  main.append(mk('h2','','Pliki i foldery'));
  const slot=mk('div');slot.id='n2s-files';main.append(slot);
- main.append(mk('p','muted','Źródło danych: Twój WebDAV FS PRO. Nie używamy przykładowych katalogów.'));
+ main.append(mk('p','muted','Pliki z Twojego serwera WebDAV.'));
  shell.append(side(),main);
  const inp=mk('input');inp.id='n2s-upload';inp.type='file';inp.multiple=true;inp.hidden=true;inp.addEventListener('change',()=>upload(inp.files));
  root.replaceChildren(header(),shell,bottom(),inp);applyZoom(state.zoom);renderFiles();
