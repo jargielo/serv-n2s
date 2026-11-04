@@ -153,3 +153,43 @@ test('WebDAV dark appearance without a semantic header produces a dark player me
   assert.equal(menu.style.getPropertyValue('--player-panel'),'rgb(26, 31, 43)');
   assert.equal(menu.style.getPropertyValue('--player-text'),'rgb(247, 249, 252)');
 });
+
+
+test('clicking filename inside WebDAV hash-folder row offers external players', async () => {
+  const dom=makeDom('<div class="file-row"><div class="filename" id="item">Rafał Rutkowski Sezon 1 Odcinek 1.mp4</div><button id="options">⋮</button></div>');
+  dom.window.location.hash='#/Seriale';
+  const {document,MouseEvent}=dom.window;
+  const item=document.getElementById('item');
+  let vendorClick=0;
+  item.addEventListener('click',()=>vendorClick++);
+  item.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
+  assert.equal(vendorClick,0,'native preview prevented until explicit user choice');
+  const dialog=document.querySelector('.n2s-video-dialog');
+  assert.ok(dialog,'video player menu appears for non-link row filename');
+  assert.match(dialog.textContent,/Rafał Rutkowski/);
+  await new Promise(resolve=>setTimeout(resolve,30));
+  assert.match(dialog.textContent,/MX Player/);
+  assert.match(dialog.textContent,/Arc Player/);
+  const choice=[...dialog.querySelectorAll('a[href^="intent:"]')][0];
+  assert.match(choice.href,/Seriale/);
+  assert.match(choice.href,/Rafa%C5%82%20Rutkowski/);
+  dialog.querySelector('.n2s-video-action').click();
+  assert.equal(vendorClick,1,'native preview opens after choosing in-browser playback');
+});
+
+test('native WebDAV three dot menu and folder names are not intercepted', () => {
+  const dom=makeDom('<div class="file-row"><div id="name">Seriale</div><button id="opts">⋮</button></div>');
+  dom.window.location.hash='#/Filmy';
+  const {document,MouseEvent}=dom.window;
+  document.querySelector('#name').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
+  document.querySelector('#opts').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
+  assert.equal(document.querySelector('.n2s-video-dialog'),null);
+});
+
+test('native SPA player chooser rejects invalid route paths and unrelated nodes', () => {
+  const dom=makeDom('<div id="name">film.mp4</div>');
+  dom.window.location.hash='#/../private';
+  const {document,MouseEvent}=dom.window;
+  document.querySelector('#name').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
+  assert.equal(document.querySelector('.n2s-video-dialog'),null);
+});
