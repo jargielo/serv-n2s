@@ -29,3 +29,13 @@ test('all three themes update live and persist without removing any WebDAV files
   assert.equal(document.querySelector('#upload').textContent,'Przeslij');
   assert.equal(document.querySelector('main a').getAttribute('href'),'/Filmy/test.mkv');
 });
+
+test('legacy WebDAV hash URLs for short and long N2S paths are covered', () => {
+  const script = fs.readFileSync(path.resolve(__dirname,'../n2s-themes.js'),'utf8');
+  const match = script.match(/if \(\/(\^#.*)\/i\.test\(frag\)\)/);
+  assert.ok(match,'hash repair expression must exist');
+  const regex = new RegExp(match[1],'i');
+  assert.equal(regex.test('#/n2s_cloude'),true);
+  assert.equal(regex.test('#/_n2s_overlay_2026/app'),true);
+  assert.equal(regex.test('#/Filmy/'),false);
+});
