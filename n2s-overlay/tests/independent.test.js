@@ -38,7 +38,7 @@ test('standalone app switches three layouts and lists real WebDAV XML',async()=>
  const input=doc.querySelector('input.search');
  input.value='film';
  input.dispatchEvent(new window.Event('input',{bubbles:true}));
- assert.equal(doc.querySelectorAll('.tile').length,1);
+ assert.equal(doc.querySelectorAll('.tile').length,2);
  assert.match(doc.querySelector('#n2s-files').textContent,/film testowy/);
  assert.ok(!doc.querySelector('#n2s-files').textContent.includes('Seriale'));
  window.close();
