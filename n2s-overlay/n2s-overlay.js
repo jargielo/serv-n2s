@@ -140,13 +140,12 @@ function requestHandler(req, res) {
   let reqPath;
   try { reqPath = new URL(req.url, 'http://localhost').pathname; }
   catch (_) { res.writeHead(400); res.end(); return; }
-  // Browser navigation to the domain root should display the native WebDAV
-  // SPA root route. Keep PROPFIND, PUT, WebDAV clients, downloads and API
-  // requests untouched (fragment identifiers are browser-only).
+  // Browser navigation to the domain root opens the N2S CLOUD UI.
+  // Keep WebDAV clients, files, APIs, and other request methods unchanged.
   if (req.method === 'GET' && req.url === '/' &&
       /text\/html/i.test(String(req.headers.accept || ''))) {
     res.writeHead(302, {
-      'Location': '/#/',
+      'Location': '/n2s_cloude',
       'Cache-Control': 'no-store',
       'Vary': 'Accept',
       'Content-Length': '0'
