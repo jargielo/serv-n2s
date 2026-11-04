@@ -158,6 +158,7 @@
         area.appendChild(linkRow('Wybierz aplikację', 'Wybierz dowolny zgodny odtwarzacz na Androidzie', intentUrl(streamUrl)));
         area.appendChild(linkRow('MX Player', 'Bezpłatna wersja MX Player', intentUrl(streamUrl, 'com.mxtech.videoplayer.ad')));
         area.appendChild(linkRow('MX Player Pro', 'Płatna wersja MX Player', intentUrl(streamUrl, 'com.mxtech.videoplayer.pro')));
+        area.appendChild(linkRow('Arc Player', 'Otwórz w Arc Player na Androidzie (wymaga zainstalowanej aplikacji)', intentUrl(streamUrl, 'com.videoplayer.arcplayer')));
         area.appendChild(linkRow('VLC', 'Otwórz w VLC na Androidzie', intentUrl(streamUrl, 'org.videolan.vlc')));
         const copy = menuRow('Kopiuj adres tymczasowy', 'Przydatne w odtwarzaczach sieciowych');
         copy.addEventListener('click', async () => {
