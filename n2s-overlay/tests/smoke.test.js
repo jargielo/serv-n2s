@@ -84,11 +84,6 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   assert.match(html.body,/_n2s_overlay_2026\/video\.css/);
   assert.doesNotMatch(html.body, /_n2s_overlay_2026\/themes\.js/);
   assert.doesNotMatch(html.body, /_n2s_overlay_2026\/themes\.css/);
-  for (const asset of ['themes.js', 'themes.css', 'themes/amoled.svg', 'themes/catalyst.svg', 'themes/pro.svg']) {
-    const file=await request('/_n2s_overlay_2026/'+asset);
-    assert.equal(file.status, 200, 'theme asset '+asset);
-    assert.ok(file.body.length > 40, 'nonempty theme asset '+asset);
-  }
   const js=await request('/_n2s_overlay_2026/brand.js');
   assert.match(js.body,/n2s Cloude/);
   assert.doesNotMatch(js.body,/classList\.add\('n2s-brand-text'\)/);
@@ -102,22 +97,11 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   assert.match(playerStyle.body,/n2s-video-dialog/);
   assert.doesNotMatch(html.body, /_n2s_overlay_2026\/themes\.js/);
   assert.doesNotMatch(html.body, /_n2s_overlay_2026\/themes\.css/);
-  const appearance = await request('/_n2s_overlay_2026/wyglad');
-  assert.equal(appearance.status, 200);
-  assert.match(appearance.body, /N2S CLOUD — Motywy/);
-  assert.match(appearance.body, /themes\.js/);
-  assert.match(appearance.body, /themes\.css/);
-    const themeScript = await request('/_n2s_overlay_2026/themes.js');
-  assert.equal(themeScript.status, 200);
-  assert.match(themeScript.body, /n2s\.ui\.theme\.v1/);
-  const themeCss = await request('/_n2s_overlay_2026/themes.css');
-  assert.equal(themeCss.status, 200);
-  assert.match(themeCss.body, /data-n2s-theme/);
-  for (const id of ['amoled','catalyst','pro']) {
-    const preview = await request('/_n2s_overlay_2026/themes/' + id + '.svg');
-    assert.equal(preview.status, 200);
-    assert.match(preview.headers['content-type'], /image\/svg\+xml/);
-    assert.match(preview.body, /<svg/);
+  const appearance=await request('/_n2s_overlay_2026/wyglad');
+  assert.equal(appearance.status,302);
+  assert.equal(appearance.headers.location,'/n2s_cloude');
+  for (const old of ['themes.js','themes.css','themes/amoled.svg','themes/catalyst.svg','themes/pro.svg']) {
+    assert.equal((await request('/_n2s_overlay_2026/'+old)).status,404,'old theme retired: '+old);
   }
   const dav=await request('/','PROPFIND',true);
   assert.equal(dav.status,207);
