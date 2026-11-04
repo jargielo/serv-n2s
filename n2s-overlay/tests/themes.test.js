@@ -6,11 +6,12 @@ const path = require('node:path');
 const {JSDOM} = require('jsdom');
 const script = fs.readFileSync(path.resolve(__dirname, '../n2s-themes.js'), 'utf8');
 const css = fs.readFileSync(path.resolve(__dirname, '../n2s-themes.css'), 'utf8');
-test('all three themes update live and persist without removing any WebDAV files', () => {
+test('all three themes update live and persist without removing any WebDAV files', async () => {
   const dom = new JSDOM('<!doctype html><html lang="pl"><body><main><a href="/Filmy/test.mkv">Film</a><button id="upload">Przeslij</button></main></body></html>', {
     url: 'https://jargielo.gh.srv.us/', runScripts: 'outside-only'
   });
   dom.window.eval(script);
+  await new Promise(resolve => setTimeout(resolve, 30));
   const {document,localStorage} = dom.window;
   assert.equal(document.querySelectorAll('.n2s-theme-card').length, 3);
   for (const name of ['amoled','catalyst','pro']) {
