@@ -83,3 +83,49 @@ test('visible HTML video preview gets an external player action', async () => {
   assert.ok(dialog);
   assert.match(dialog.textContent,/wideo.mp4/);
 });
+
+test('native WebDAV player menu uses live header palette rather than hard-coded blue', async () => {
+  const dom = makeDom(
+    '<header style="background-color:rgb(234, 237, 240)">WebDAV n2s</header>' +
+    '<a href="/Filmy/video.mp4" id="film">Film</a>'
+  );
+  const {document,MouseEvent} = dom.window;
+  document.getElementById('film').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
+  const shade = document.querySelector('.n2s-video-shade');
+  assert.ok(shade);
+  assert.equal(shade.dataset.n2sPlayerSkin,'native');
+  assert.equal(shade.style.getPropertyValue('--player-panel'),'rgb(234, 237, 240)');
+  assert.equal(shade.style.getPropertyValue('--player-text'),'rgb(28, 34, 44)');
+  assert.equal(document.querySelectorAll('.n2s-video-action').length>0,true);
+});
+
+test('independent N2S menu follows active theme without overriding its CSS tokens', async () => {
+  const dom = makeDom(
+    '<div id="n2s-app"></div>' +
+    '<a href="/Filmy/video.mp4" id="film">Film</a>'
+  );
+  const {document,MouseEvent} = dom.window;
+  document.body.style.setProperty('--panel','#050609');
+  document.body.style.setProperty('--accent','#44c4ff');
+  document.body.setAttribute('data-theme','amoled');
+  document.getElementById('film').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
+  const shade = document.querySelector('.n2s-video-shade');
+  assert.ok(shade);
+  assert.equal(shade.dataset.n2sPlayerSkin,'app');
+  assert.equal(shade.style.getPropertyValue('--player-panel'),'');
+  document.body.dataset.theme='catalyst';
+  await new Promise(resolve=>setTimeout(resolve,30));
+  assert.equal(shade.dataset.n2sPlayerSkin,'app');
+  assert.equal(shade.style.getPropertyValue('--player-accent'),'');
+  // The dialog stays in the DOM and uses the inherited current theme variables.
+  assert.ok(document.querySelector('.n2s-video-dialog'));
+});
+
+test('player CSS uses active application tokens, not fixed buttons', () => {
+  const css = fs.readFileSync(path.resolve(__dirname, '../n2s-video.css'),'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../app.html'),'utf8');
+  assert.match(css, /--player-panel:\s*var\(--panel/);
+  assert.match(css, /background:\s*var\(--player-button\)\s*!important/);
+  assert.match(css, /color:\s*var\(--player-text\)\s*!important/);
+  assert.match(html, /_n2s_overlay_2026\/video\.css/);
+});
