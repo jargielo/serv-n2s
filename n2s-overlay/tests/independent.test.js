@@ -10,6 +10,19 @@ const xml='<?xml version="1.0"?><d:multistatus xmlns:d="DAV:">'+
 '<d:response><d:href>/Seriale/</d:href><d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>'+
 '<d:response><d:href>/Filmy/</d:href><d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>'+
 '<d:response><d:href>/film%20testowy.mkv</d:href><d:propstat><d:prop><d:resourcetype/><d:getcontentlength>2400000</d:getcontentlength><d:getlastmodified>Wed, 04 Nov 2026 12:00:00 GMT</d:getlastmodified></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>';
+test('removes stale WebDAV hash route from independent N2S browser URL',async()=>{
+ const dom=new JSDOM('<!doctype html><html><body><div id="n2s-app"></div></body></html>',{
+   url:'https://jargielo.gh.srv.us/n2s_cloude#/',runScripts:'outside-only'
+ });
+ const {window}=dom;
+ window.fetch=async()=>({status:207,ok:true,text:async()=>xml});
+ window.eval(appSource);
+ await new Promise(resolve=>setTimeout(resolve,40));
+ assert.equal(window.location.pathname,'/n2s_cloude');
+ assert.equal(window.location.hash,'');
+ assert.ok(window.document.querySelector('.layout'));
+ window.close();
+});
 test('standalone app switches only Dark and Light and lists real WebDAV XML',async()=>{
  const dom=new JSDOM('<!doctype html><html lang="pl"><body><div id="n2s-app"></div></body></html>',{url:'https://jargielo.gh.srv.us/_n2s_overlay_2026/app',runScripts:'outside-only'});
  const {window}=dom;
