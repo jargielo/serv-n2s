@@ -1,0 +1,29 @@
+name: N2S Overlay tests
+
+on:
+  push:
+    paths:
+      - 'n2s-overlay/**'
+      - '.github/workflows/n2s-overlay.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  overlay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Node and Bash syntax
+        run: |
+          node --check n2s-overlay/n2s-overlay.js
+          bash -n n2s-overlay/n2s
+          bash -n n2s-overlay/n2s-nazwa
+          bash -n n2s-overlay/install-overlay.sh
+      - name: Test secure WebDAV proxy
+        run: node --test n2s-overlay/tests/smoke.test.js
