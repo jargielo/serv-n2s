@@ -2,7 +2,40 @@
 'use strict';
 const root=document.getElementById('n2s-app');
 const styles={amoled:'AMOLED Files',catalyst:'Catalyst Dark',pro:'File Manager Pro'};
-const state={theme:'catalyst',dir:'/',files:[],filter:'',view:'grid',busy:false};
+const state={theme:'catalyst',dir:'/',files:[],filter:'',view:'grid',busy:false,zoom:100};
+try{
+ const storedZoom=Number(localStorage.getItem('n2s.app.zoom'));
+ if(Number.isFinite(storedZoom) && storedZoom>=75 && storedZoom<=150 && storedZoom%5===0)state.zoom=storedZoom;
+}catch{}
+function applyZoom(value){
+ const z=Number(value);
+ if(!Number.isFinite(z))return;
+ state.zoom=Math.max(75,Math.min(150,Math.round(z/5)*5));
+ root.style.zoom=String(state.zoom/100);
+ const label=document.getElementById('n2s-zoom-value');
+ if(label)label.textContent=state.zoom+'%';
+ const slider=document.getElementById('n2s-zoom-slider');
+ if(slider)slider.value=String(state.zoom);
+ try{localStorage.setItem('n2s.app.zoom',String(state.zoom))}catch{}
+}
+function zoomControls(){
+ const group=mk('div','zoom-controls');
+ group.setAttribute('role','group');
+ group.setAttribute('aria-label','Skalowanie interfejsu');
+ const minus=btn('−','zoom-button',()=>applyZoom(state.zoom-5));
+ minus.setAttribute('aria-label','Pomniejsz');
+ const slider=mk('input','zoom-slider');
+ slider.type='range';slider.min='75';slider.max='150';slider.step='5';
+ slider.id='n2s-zoom-slider';slider.value=String(state.zoom);
+ slider.setAttribute('aria-label','Skala interfejsu w procentach');
+ slider.addEventListener('input',()=>applyZoom(slider.value));
+ const plus=btn('+','zoom-button',()=>applyZoom(state.zoom+5));
+ plus.setAttribute('aria-label','Powiększ');
+ const display=btn(state.zoom+'%','zoom-value',()=>applyZoom(100));
+ display.id='n2s-zoom-value';display.title='Przywróć 100%';
+ display.setAttribute('aria-label','Skala '+state.zoom+' procent. Kliknij, aby przywrócić 100 procent');
+ return append(group,minus,slider,plus,display);
+}
 const VIDEO=/\.(mp4|mkv|avi|webm|mov|m4v|wmv|flv|ts|m2ts|mpeg|mpg|ogv)$/i;
 const IMAGE=/\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i;
 const AUDIO=/\.(flac|mp3|wav|m4a|aac|opus|ogg)$/i;
@@ -91,7 +124,7 @@ function header(){
  const select=mk('select','layout');select.title='Wybierz motyw';
  for(const [id,label] of Object.entries(styles)){const o=mk('option','',label);o.value=id;o.selected=state.theme===id;select.append(o)}
  select.addEventListener('change',()=>saveTheme(select.value));
- return append(h,logo,search,select);
+ return append(h,logo,search,select,zoomControls());
 }
 function side(){
  const n=mk('aside');n.append(mk('div','caption','Nawigacja'));
@@ -124,7 +157,7 @@ function render(){
  main.append(mk('p','muted','Źródło danych: Twój WebDAV FS PRO. Nie używamy przykładowych katalogów.'));
  shell.append(side(),main);
  const inp=mk('input');inp.id='n2s-upload';inp.type='file';inp.multiple=true;inp.hidden=true;inp.addEventListener('change',()=>upload(inp.files));
- root.replaceChildren(header(),shell,bottom(),inp);renderFiles();
+ root.replaceChildren(header(),shell,bottom(),inp);applyZoom(state.zoom);renderFiles();
 }
 function newFolder(){const name=prompt('Nazwa folderu:');if(name===null)return;try{request(filePath(name,true),'MKCOL').then(()=>browse()).catch(e=>toast(e.message))}catch(e){toast(e.message)}}
 async function upload(files){if(!files?.length)return;for(const f of files){try{await request(filePath(f.name),'PUT',{headers:{'Content-Type':f.type||'application/octet-stream'},body:f});toast('Przesłano '+f.name)}catch(e){toast('Błąd '+f.name+': '+e.message)}}browse()}
