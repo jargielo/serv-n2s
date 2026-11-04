@@ -142,6 +142,20 @@ function requestHandler(req, res) {
   let reqPath;
   try { reqPath = new URL(req.url, 'http://localhost').pathname; }
   catch (_) { res.writeHead(400); res.end(); return; }
+  // Browser navigation to the domain root should display the native WebDAV
+  // SPA root route. Keep PROPFIND, PUT, WebDAV clients, downloads and API
+  // requests untouched (fragment identifiers are browser-only).
+  if (req.method === 'GET' && req.url === '/' &&
+      /text\/html/i.test(String(req.headers.accept || ''))) {
+    res.writeHead(302, {
+      'Location': '/#/',
+      'Cache-Control': 'no-store',
+      'Vary': 'Accept',
+      'Content-Length': '0'
+    });
+    res.end();
+    return;
+  }
   if (mediaRoutes(req, res, reqPath)) return;
   // Standalone N2S file manager, separate from the original WebDAV interface.
   // The HTML entry is authorized by the original WebDAV server. No fake login.
