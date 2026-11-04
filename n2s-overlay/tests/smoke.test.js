@@ -70,10 +70,12 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   const ownAppJs=await request('/_n2s_overlay_2026/app.js');
   assert.equal(ownAppJs.status,200);
   assert.match(ownAppJs.body,/PROPFIND/);
-  assert.match(ownAppJs.body,/AMOLED Files/);
+  assert.match(ownAppJs.body,/dark:'Dark',light:'Light'/);
+  assert.doesNotMatch(ownAppJs.body,/AMOLED Files|Catalyst Dark|File Manager Pro/);
   const ownAppCss=await request('/_n2s_overlay_2026/app.css');
   assert.equal(ownAppCss.status,200);
-  assert.match(ownAppCss.body,/data-theme=pro/);
+  assert.match(ownAppCss.body,/data-theme="dark"/);
+  assert.match(ownAppCss.body,/data-theme="light"/);
   const html=await request('/','GET',true);
   assert.equal(html.status,200);
   assert.match(html.body,/_n2s_overlay_2026\/brand\.js/);
