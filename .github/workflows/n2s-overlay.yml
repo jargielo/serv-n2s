@@ -22,8 +22,13 @@ jobs:
       - name: Check Node and Bash syntax
         run: |
           node --check n2s-overlay/n2s-overlay.js
+          node --check n2s-overlay/n2s-video.js
           bash -n n2s-overlay/n2s
           bash -n n2s-overlay/n2s-nazwa
           bash -n n2s-overlay/install-overlay.sh
       - name: Test secure WebDAV proxy
         run: node --test n2s-overlay/tests/smoke.test.js
+      - name: Install browser DOM test dependency
+        run: npm install --no-save --no-package-lock jsdom@26.1.0
+      - name: Test browser player chooser
+        run: node --test n2s-overlay/tests/video.test.js
