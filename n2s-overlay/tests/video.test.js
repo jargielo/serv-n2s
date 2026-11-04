@@ -40,10 +40,10 @@ test('clicking a video file offers Android chooser, MX Player and VLC without ex
   anchor.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, button:0}));
   const dialog = document.querySelector('[role="dialog"]');
   assert.ok(dialog, 'video selection dialog exists');
-  assert.match(dialog.textContent, /Wybierz aplikację/);
-  assert.match(dialog.textContent, /VLC/);
   assert.match(dialog.textContent, /Odtwórz tutaj/);
   await new Promise(resolve=>setTimeout(resolve,30));
+  assert.match(dialog.textContent, /Wybierz aplikację/);
+  assert.match(dialog.textContent, /VLC/);
   const links = [...dialog.querySelectorAll('a[href^="intent:"]')];
   assert.equal(links.length, 4);
   assert.ok(links[0].getAttribute('href').includes('film%20testowy.mkv'));
