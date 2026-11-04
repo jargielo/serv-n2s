@@ -62,7 +62,7 @@ check_auth() {
 
 echo 'N2S CLOUD — nakładka gotowa.'
 echo "Widok lokalny: http://127.0.0.1:$OVERLAY/"
-echo 'Publiczny adres: https://jargielo.gh.srv.us/'
+echo 'Publiczny adres: https://jargielo.gh.srv.us/n2s_cloude'
 echo 'Zatrzymanie: CTRL+C'
 echo 'Odnowienie tunelu: co 60 minut.'
 
@@ -81,6 +81,20 @@ while true; do
     -R "1:127.0.0.1:$OVERLAY" jargielo@srv.us &
   TUNNEL_PID=$!
   STARTED_AT=$SECONDS
+  # If another Termux session tunnels directly to WebDAV:8080, the old
+  # interface will respond with 404 on /n2s_cloude. Report this explicitly.
+  sleep 3
+  PUBLIC_HEALTH="$(curl -fsS --connect-timeout 4 --max-time 8 \
+    'https://jargielo.gh.srv.us/_n2s_overlay_2026/health' 2>/dev/null || true)"
+  if [ "$PUBLIC_HEALTH" != 'N2S OK' ]; then
+    echo 'UWAGA: Publiczny adres NIE wskazuje na nakladke N2S.'
+    echo 'Mozliwy drugi tunel na port 8080 lub nieaktywne mapowanie srv.us.'
+    echo 'Zatrzymaj stary serwer/ssh -R w innej sesji Termuxa.'
+    echo 'Lokalnie nakladka pozostaje dostepna na http://127.0.0.1:8081/n2s_cloude'
+  else
+    echo 'OK: Publiczny tunel kieruje do N2S CLOUD.'
+    echo 'Otworz: https://jargielo.gh.srv.us/n2s_cloude'
+  fi
   while kill -0 "$TUNNEL_PID" 2>/dev/null; do
     sleep 15
     if [ $((SECONDS - STARTED_AT)) -ge 3600 ]; then
