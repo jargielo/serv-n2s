@@ -1,8 +1,8 @@
 (() => {
 'use strict';
 const root=document.getElementById('n2s-app');
-const styles={amoled:'AMOLED Files',catalyst:'Catalyst Dark',pro:'File Manager Pro'};
-const state={theme:'catalyst',dir:'/',files:[],filter:'',view:'grid',busy:false,zoom:100};
+const styles={dark:'Dark',light:'Light'};
+const state={theme:'dark',dir:'/',files:[],filter:'',view:'grid',busy:false,zoom:100};
 try{
  const storedZoom=Number(localStorage.getItem('n2s.app.zoom'));
  if(Number.isFinite(storedZoom) && storedZoom>=75 && storedZoom<=150 && storedZoom%5===0)state.zoom=storedZoom;
@@ -104,7 +104,7 @@ function popMenu(file){
 function filtered(){return state.files.filter(x=>x.name.toLocaleLowerCase('pl').includes(state.filter.toLocaleLowerCase('pl')))}
 function filesView(){
  const items=filtered();if(state.busy)return mk('div','empty','Wczytywanie folderu…');if(!items.length)return mk('div','empty',state.filter?'Brak wyników wyszukiwania':'Folder jest pusty');
- const box=mk('div',state.view==='list'||state.theme==='pro'?'list':'tiles');
+ const box=mk('div',state.view==='list'?'list':'tiles');
  for(const file of items){
   const list=box.className==='list';const row=mk('div',list?'row':'tile');
   const open=btn('',list?'mainbtn':'mainbtn',()=>openFile(file));
@@ -150,9 +150,10 @@ function bottom(){
 }
 function render(){
  document.body.dataset.theme=state.theme;
- const shell=mk('div','shell');const main=mk('main');append(main,mk('h1','',state.theme==='pro'?'Menedżer plików':state.theme==='amoled'?'Moje pliki':'Mój dysk'),mk('p','muted',(state.busy?'Wczytywanie…':state.files.length+' elementów')+' · '+styles[state.theme]),bar());
- if(state.theme==='catalyst')main.append(stats());
- main.append(mk('h2','',state.theme==='pro'?'Zawartość katalogu':'Foldery i pliki'));
+ const shell=mk('div','shell');const main=mk('main');append(main,mk('h1','','Moje pliki'),mk('p','muted',(state.busy?'Wczytywanie…':state.files.length+' elementów')+' · '+styles[state.theme]),bar());
+
+
+ main.append(mk('h2','','Pliki i foldery'));
  const slot=mk('div');slot.id='n2s-files';main.append(slot);
  main.append(mk('p','muted','Źródło danych: Twój WebDAV FS PRO. Nie używamy przykładowych katalogów.'));
  shell.append(side(),main);
