@@ -158,3 +158,12 @@ body[data-theme=pro]{--bg:#090b0e;--panel:#15191f;--second:#252d35;--accent:#c0d
 }
 .n2s-video-links { max-height:54dvh; overflow-y:auto; }
 .n2s-video-links .n2s-video-action-label { overflow-wrap:anywhere; }
+
+
+.n2s-auth-shade{position:fixed!important;inset:0;z-index:2147483050!important;background:#000a;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box}
+.n2s-auth-form{width:min(100%,420px);padding:22px;background:#202936;color:#f8fafc;border:1px solid #68758a;border-radius:16px;box-shadow:0 15px 50px #000a;font:15px system-ui,sans-serif;display:grid;gap:12px}
+.n2s-auth-form h2{margin:0;font-size:21px}.n2s-auth-form p{margin:0 0 7px;color:#d2d7df;line-height:1.5}
+.n2s-auth-input{width:100%;box-sizing:border-box;min-height:46px;padding:10px 12px;background:#121a25;color:#fff;border:1px solid #7c8798;border-radius:10px;font:inherit}
+.n2s-auth-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:4px}
+.n2s-auth-actions button{border:1px solid #8894a6;padding:11px 17px;border-radius:10px;color:#fff;background:#33445b;font:650 15px system-ui,sans-serif;cursor:pointer}
+.n2s-auth-actions button[type=submit]{background:#d1e4ff;color:#142338}
