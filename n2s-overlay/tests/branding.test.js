@@ -27,6 +27,5 @@ test('native WebDAV header renamed without changing folder CSS or icons',()=>{
   assert.equal(folder.textContent,'📁 Filmy');
   assert.equal(folder.getAttribute('style'),'color:rgb(1,2,3)');
   assert.equal(document.querySelectorAll('.n2s-brand-text').length,0);
-  dom.window.close();
  });
 });
