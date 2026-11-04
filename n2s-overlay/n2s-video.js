@@ -121,18 +121,39 @@
   }
 
   function requestWebDavLogin() {
-    // Browser native prompt is available even when app CSS is not.
-    // Credentials are never written to URL, localStorage or console.
-    const username=window.prompt('Odtwarzacz zewnętrzny — login WebDAV:');
-    if(username===null)return null;
-    if(!username.trim() || username.length>200)throw new Error('Nieprawidłowy login WebDAV.');
-    const password=window.prompt('Hasło WebDAV (używane tylko do tego połączenia):');
-    if(password===null)return null;
-    if(password.length>512)throw new Error('Hasło jest za długie.');
-    const bytes=new TextEncoder().encode(username+':'+password);
-    let binary='';
-    for(const b of bytes)binary+=String.fromCharCode(b);
-    return 'Basic '+btoa(binary);
+    // Use a masked password field. Do not persist either credential in
+    // browser storage, logs, video addresses, or URL parameters.
+    return new Promise((resolve,reject)=>{
+      const container=elt('div','n2s-auth-shade');
+      const form=elt('form','n2s-auth-form');
+      form.setAttribute('aria-label','Logowanie do odtwarzacza zewnętrznego');
+      form.appendChild(elt('h2','', 'Logowanie WebDAV'));
+      form.appendChild(elt('p','', 'Podaj dane serwera, aby jednorazowo przygotować bezpieczny link do filmu.'));
+      const username=elt('input','n2s-auth-input');
+      username.name='username';username.autocomplete='username';username.placeholder='Login WebDAV';username.required=true;username.maxLength=200;
+      const password=elt('input','n2s-auth-input');
+      password.type='password';password.name='password';password.autocomplete='current-password';password.placeholder='Hasło WebDAV';password.required=true;password.maxLength=512;
+      const actions=elt('div','n2s-auth-actions');
+      const cancel=elt('button','n2s-auth-cancel','Anuluj');cancel.type='button';
+      const submit=elt('button','n2s-auth-submit','Połącz');submit.type='submit';
+      actions.append(cancel,submit);
+      form.append(username,password,actions);container.appendChild(form);
+      const finish=value=>{container.remove();resolve(value)};
+      cancel.addEventListener('click',()=>finish(null));
+      container.addEventListener('click',event=>{if(event.target===container)finish(null)});
+      form.addEventListener('submit',event=>{
+        event.preventDefault();
+        if(!username.value.trim()||!password.value)return;
+        const bytes=new TextEncoder().encode(username.value+':'+password.value);
+        let binary='';
+        for(const char of bytes)binary+=String.fromCharCode(char);
+        const header='Basic '+btoa(binary);
+        password.value='';
+        finish(header);
+      });
+      document.body.appendChild(container);
+      username.focus();
+    });
   }
   async function temporaryMediaUrl(videoUrl) {
     const uri = new URL(videoUrl, location.href);
@@ -157,7 +178,7 @@
     }
     let {reply,data}=await issue();
     if(reply.status===401) {
-      const header=requestWebDavLogin();
+      const header=await requestWebDavLogin();
       if(!header)throw new Error('Anulowano logowanie do odtwarzacza zewnętrznego.');
       ({reply,data}=await issue(header));
     }
