@@ -193,3 +193,56 @@ test('native SPA player chooser rejects invalid route paths and unrelated nodes'
   document.querySelector('#name').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
   assert.equal(document.querySelector('.n2s-video-dialog'),null);
 });
+
+
+test('persistent player button lists video files from current WebDAV folder without native click interception', async () => {
+ const dom=makeDom('<main><div>Seriale</div></main>');
+ const {window}=dom,doc=window.document;
+ window.location.hash='#/Seriale';
+ const xml='<?xml version="1.0"?><d:multistatus xmlns:d="DAV:">'+
+  '<d:response><d:href>/Seriale/</d:href></d:response>'+
+  '<d:response><d:href>/Seriale/odcinek%201.mkv</d:href><d:propstat><d:prop><d:getcontentlength>123</d:getcontentlength></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>'+
+  '<d:response><d:href>/Seriale/notatki.txt</d:href><d:propstat><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>'+
+  '</d:multistatus>';
+ const originalFetch=window.fetch;
+ const requests=[];
+ window.fetch=(url,options)=>{
+  if(options?.method==='PROPFIND'){
+   requests.push({url,options});
+   return Promise.resolve({status:207,text:async()=>xml});
+  }
+  return originalFetch(url,options);
+ };
+ await new Promise(done=>setTimeout(done,25));
+ const button=doc.querySelector('.n2s-player-entry');
+ assert.ok(button,'manual player chooser must be visible without any video element');
+ button.click();
+ await new Promise(done=>setTimeout(done,25));
+ assert.equal(requests.length,1);
+ assert.equal(requests[0].url,'/Seriale/');
+ assert.equal(requests[0].options.credentials,'same-origin');
+ const picker=doc.querySelector('.n2s-video-dialog');
+ assert.match(picker.textContent,/odcinek 1\.mkv/);
+ assert.doesNotMatch(picker.textContent,/notatki\.txt/);
+ const rows=[...picker.querySelectorAll('button.n2s-video-action')];
+ const choose=rows.find(x=>x.textContent.includes('odcinek 1.mkv'));
+ assert.ok(choose);
+ choose.click();
+ await new Promise(done=>setTimeout(done,25));
+ assert.match(doc.querySelector('.n2s-video-dialog').textContent,/MX Player/);
+ assert.match(doc.querySelector('.n2s-video-dialog').textContent,/VLC/);
+});
+
+test('manual player chooser shows an understandable notice when folder is empty', async () => {
+ const dom=makeDom('<main>Pliki</main>');
+ const {window}=dom,doc=window.document;
+ window.location.hash='#/';
+ window.fetch=(url,options)=>{
+  if(options?.method==='PROPFIND')return Promise.resolve({status:207,text:async()=>'<d:multistatus xmlns:d="DAV:"><d:response><d:href>/</d:href></d:response></d:multistatus>'});
+  throw Error('unexpected request');
+ };
+ await new Promise(done=>setTimeout(done,25));
+ doc.querySelector('.n2s-player-entry').click();
+ await new Promise(done=>setTimeout(done,25));
+ assert.match(doc.querySelector('.n2s-video-dialog').textContent,/Nie znaleziono filmów/);
+});
