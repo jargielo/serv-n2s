@@ -113,3 +113,26 @@
 @media (prefers-reduced-motion: reduce) {
   .n2s-video-action, .n2s-video-pick { transition: none !important; }
 }
+
+/* Persistent, independent player access on original WebDAV n2s. */
+.n2s-player-entry {
+ position:fixed!important;
+ z-index:2147482950!important;
+ right:max(12px, env(safe-area-inset-right))!important;
+ bottom:calc(74px + env(safe-area-inset-bottom))!important;
+ min-height:44px!important;
+ padding:9px 15px!important;
+ border-radius:13px!important;
+ border:1px solid var(--n2s-pick-border,#8092a8)!important;
+ background:var(--n2s-pick-bg,#263143)!important;
+ color:var(--n2s-pick-text,#fff)!important;
+ font:650 14px system-ui,sans-serif!important;
+ box-shadow:0 4px 19px #0005!important;
+ cursor:pointer;
+}
+.n2s-player-entry:focus-visible {
+ outline:2px solid #80b5ff!important;
+ outline-offset:2px;
+}
+.n2s-video-links { max-height:54dvh; overflow-y:auto; }
+.n2s-video-links .n2s-video-action-label { overflow-wrap:anywhere; }
