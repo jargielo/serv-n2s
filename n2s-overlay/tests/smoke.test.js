@@ -38,15 +38,15 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
     await new Promise(done=>setTimeout(done,40));
   }
   assert.equal(ready,true,'proxy should become ready');
-  // A browser navigating the domain root must land at the native SPA home.
+  // A browser navigating the domain root must land at N2S CLOUD.
   // Do not redirect non-browser WebDAV requests, including GET without HTML accept.
   const landing=await request('/','GET',false,null,'text/html,application/xhtml+xml');
-  assert.equal(landing.status,302,'browser homepage redirects to hash route');
-  assert.equal(landing.headers.location,'/#/');
+  assert.equal(landing.status,302,'browser homepage redirects to standalone file manager');
+  assert.equal(landing.headers.location,'/n2s_cloude');
   assert.equal(landing.headers['cache-control'],'no-store');
   const navigateWithAuth=await request('/','GET',true,null,'text/html');
   assert.equal(navigateWithAuth.status,302);
-  assert.equal(navigateWithAuth.headers.location,'/#/');
+  assert.equal(navigateWithAuth.headers.location,'/n2s_cloude');
   const apiRoot=await request('/','GET',true,null,'application/octet-stream');
   assert.equal(apiRoot.status,200,'non-browser root GET is unchanged');
   const rootQuery=await request('/?download=1','GET',true,null,'text/html');
