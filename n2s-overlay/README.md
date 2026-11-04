@@ -14,6 +14,21 @@ curl -fsSL https://raw.githubusercontent.com/jargielo/serv-n2s/main/n2s-overlay/
 
 Zanim je wkleisz, **zatrzymaj dotychczasowy tunel** poleceniem Ctrl+C i uruchom WebDAV FS PRO z wymaganym loginem i hasłem na porcie 8080.
 
+### Filmy: własny odtwarzacz
+
+Po kliknięciu bezpośredniego linku do filmu (MP4, MKV, AVI i inne) pojawia się menu:
+
+- **Odtwórz tutaj** — otwiera dotychczasowy odtwarzacz.
+- **Wybierz aplikację** — wysyła film do Androida przez `ACTION_VIEW`; możliwość wyboru zależy od przeglądarki i ustawień Androida.
+- **VLC** — próba otwarcia w aplikacji VLC.
+- **Kopiuj adres filmu** — do ręcznego wklejenia w odtwarzaczu sieciowym.
+
+Przy podglądzie opartym na elemencie HTML `<video>` pojawia się przycisk `Otwórz w…`. Jeżeli aplikacja korzysta z tymczasowego adresu `blob:`, nie można udostępnić go odtwarzaczowi zewnętrznemu; opcje zewnętrzne są wtedy wyłączone.
+
+**Uwaga:** odtwarzacz zewnętrzny nie dziedziczy hasła WebDAV zapamiętanego w przeglądarce. Może poprosić o ponowne zalogowanie lub odmówić strumieniowania. Nakładka nie przekazuje hasła w adresie ani w `intent:`.
+
+Aby zaktualizować działającą nakładkę, zatrzymaj ją przez Ctrl+C i ponownie uruchom instalator.
+
 ### Codzienna obsługa
 
 - Uruchom nakładkę i tunel: `n2s`.
