@@ -20,7 +20,9 @@ const MAX_HTML_BYTES = 4 * 1024 * 1024;
 const ASSET_PREFIX = '/_n2s_overlay_2026/';
 const CSS_PATH = ASSET_PREFIX + 'style.css';
 const JS_PATH = ASSET_PREFIX + 'brand.js';
-const INJECT = `<link rel="stylesheet" href="${CSS_PATH}"><script defer src="${JS_PATH}"></script>`;
+const VIDEO_JS_PATH = ASSET_PREFIX + 'video.js';
+const VIDEO_CSS_PATH = ASSET_PREFIX + 'video.css';
+const INJECT = `<link rel="stylesheet" href="${CSS_PATH}"><link rel="stylesheet" href="${VIDEO_CSS_PATH}"><script defer src="${JS_PATH}"></script><script defer src="${VIDEO_JS_PATH}"></script>`;
 const HOP_HEADERS = ['connection', 'keep-alive', 'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade'];
 
 if (![UPSTREAM_PORT, PROXY_PORT].every(p => Number.isInteger(p) && p > 0 && p < 65536) || UPSTREAM_PORT === PROXY_PORT) {
@@ -142,6 +144,19 @@ function requestHandler(req, res) {
   }
   if ((req.method === 'GET' || req.method === 'HEAD') && reqPath === JS_PATH) {
     return noCache(res, 'application/javascript; charset=utf-8', scriptForName(getName()), req.method === 'HEAD');
+  }
+  if ((req.method === 'GET' || req.method === 'HEAD') && (reqPath === VIDEO_JS_PATH || reqPath === VIDEO_CSS_PATH)) {
+    const isJs = reqPath === VIDEO_JS_PATH;
+    const assetName = isJs ? 'n2s-video.js' : 'n2s-video.css';
+    const file = path.join(__dirname, assetName);
+    try {
+      return noCache(res, isJs ? 'application/javascript; charset=utf-8' : 'text/css; charset=utf-8',
+        fs.readFileSync(file, 'utf8'), req.method === 'HEAD');
+    } catch (_) {
+      res.writeHead(503, {'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store'});
+      res.end('Brak komponentu: ' + assetName);
+      return;
+    }
   }
   if (reqPath.startsWith(ASSET_PREFIX)) {
     res.writeHead(404, {'Cache-Control':'no-store'}); res.end(); return;
