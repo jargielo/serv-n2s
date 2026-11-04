@@ -144,7 +144,7 @@ function requestHandler(req, res) {
   // Standalone N2S file manager, separate from the original WebDAV interface.
   // The HTML entry is authorized by the original WebDAV server. No fake login.
   if ((req.method === 'GET' || req.method === 'HEAD') &&
-      (reqPath === ASSET_PREFIX + 'app' || reqPath === ASSET_PREFIX + 'app/')) {
+      (reqPath === ASSET_PREFIX + 'app' || reqPath === ASSET_PREFIX + 'app/' || reqPath === '/n2s_cloude' || reqPath === '/n2s_cloude/')) {
     const probeHeaders = {};
     if (req.headers.authorization) probeHeaders.authorization = req.headers.authorization;
     if (req.headers.cookie) probeHeaders.cookie = req.headers.cookie;
