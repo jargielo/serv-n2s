@@ -9,7 +9,7 @@ test('native WebDAV header renamed without changing folder CSS or icons',()=>{
  const match=overlay.match(/const INJECT = ([^\n]+);/);
  assert.ok(match);
  assert.doesNotMatch(match[1],/themes\.css|themes\.js|style\.css/);
- assert.match(match[1],/brand\.js/);
+ assert.match(match[1],/JS_PATH/);
  const dom=new JSDOM('<!doctype html><html><head><title>WebDAV FS PRO</title></head><body><header><h1>WebDAV FS PRO</h1></header><section><div class="original-folder" style="color:rgb(1,2,3)">📁 Filmy</div></section></body></html>',{
    url:'https://jargielo.gh.srv.us/',runScripts:'outside-only',pretendToBeVisual:true
  });
