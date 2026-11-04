@@ -97,6 +97,7 @@
     root.append(toggle,panel);
     document.body.appendChild(root);
     setTheme(chosen);
+    if (location.pathname === '/_n2s_overlay_2026/wyglad') open(true);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build,{once:true});
   else build();
