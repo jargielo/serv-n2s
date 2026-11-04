@@ -18,9 +18,9 @@ const app = http.createServer((req,res) => {
   res.writeHead(200,{'Content-Type':'text/html'});
   res.end('<!doctype html><html><head><title>WebDAV FS PRO</title></head><body><h1>WebDAV FS PRO</h1></body></html>');
 });
-function request(path_,method='GET',authorized=false,body){
+function request(path_,method='GET',authorized=false,body,accept){
   return new Promise((resolve,reject)=>{
-    const req=http.request({hostname:'127.0.0.1',port:PROXY,path:path_,method,headers:authorized?{Authorization:'Basic dGVzdDp0ZXN0'}:{}},res=>{
+    const req=http.request({hostname:'127.0.0.1',port:PROXY,path:path_,method,headers:{...(authorized?{Authorization:'Basic dGVzdDp0ZXN0'}:{}),...(accept?{Accept:accept}:{})}},res=>{
       let d='';res.on('data',b=>d+=b);res.on('end',()=>resolve({status:res.statusCode,headers:res.headers,body:d}));
     });req.on('error',reject);req.end(body);
   });
@@ -38,6 +38,20 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
     await new Promise(done=>setTimeout(done,40));
   }
   assert.equal(ready,true,'proxy should become ready');
+  // A browser navigating the domain root must land at the native SPA home.
+  // Do not redirect non-browser WebDAV requests, including GET without HTML accept.
+  const landing=await request('/','GET',false,null,'text/html,application/xhtml+xml');
+  assert.equal(landing.status,302,'browser homepage redirects to hash route');
+  assert.equal(landing.headers.location,'/#/');
+  assert.equal(landing.headers['cache-control'],'no-store');
+  const navigateWithAuth=await request('/','GET',true,null,'text/html');
+  assert.equal(navigateWithAuth.status,302);
+  assert.equal(navigateWithAuth.headers.location,'/#/');
+  const apiRoot=await request('/','GET',true,null,'application/octet-stream');
+  assert.equal(apiRoot.status,200,'non-browser root GET is unchanged');
+  const rootQuery=await request('/?download=1','GET',true,null,'text/html');
+  assert.equal(rootQuery.status,200,'querystring requests are not redirected');
+
   assert.equal((await request('/')).status,401,'unauthenticated GET blocked');
   assert.equal((await request('/','PROPFIND')).status,401,'unauthenticated PROPFIND blocked');
   const deniedApp=await request('/_n2s_overlay_2026/app');
