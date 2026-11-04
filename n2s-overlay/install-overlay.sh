@@ -20,7 +20,7 @@ node --check < "$TARGET/n2s-video.js.new"
 node --check < "$TARGET/n2s-themes.js.new"
 bash -n "$TARGET/n2s.new"
 bash -n "$TARGET/n2s-nazwa.new"
-for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css n2s n2s-nazwa; do
+for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css n2s-themes.js n2s-themes.css n2s n2s-nazwa; do
   mv "$TARGET/$FILE.new" "$TARGET/$FILE"
 done
 for THEME in amoled catalyst pro; do
