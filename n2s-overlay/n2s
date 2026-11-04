@@ -1,8 +1,8 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # N2S CLOUD: local visual overlay + protected WebDAV FS PRO + srv.us tunnel.
 set -u
-PORT=8080
-OVERLAY=8081
+PORT=8081
+OVERLAY=8080
 KEY="$HOME/.ssh/id_ed25519"
 PROXY_JS="$HOME/.local/share/n2s-overlay/n2s-overlay.js"
 PROXY_PID=""
@@ -31,18 +31,10 @@ if [ ! -f "$PROXY_JS" ]; then
   echo "Nie znaleziono nakładki: $PROXY_JS"
   exit 1
 fi
+# Refuse to start until the real WebDAV server has been moved to 8081.
+# Never kill the user's existing server or attempt to bind the occupied 8080.
 if curl -fsS --max-time 2 "http://127.0.0.1:$OVERLAY/_n2s_overlay_2026/health" >/dev/null 2>&1; then
-  echo 'Na porcie 8081 działa już N2S Overlay. Zatrzymaj poprzednią sesję n2s.'
-  exit 1
-fi
-
-termux-wake-lock >/dev/null 2>&1 || true
-N2S_UPSTREAM_PORT="$PORT" N2S_PROXY_PORT="$OVERLAY" node "$PROXY_JS" &
-PROXY_PID=$!
-sleep 1
-if ! kill -0 "$PROXY_PID" 2>/dev/null ||
-   [ "$(curl -s --max-time 2 "http://127.0.0.1:$OVERLAY/_n2s_overlay_2026/health")" != 'N2S OK' ]; then
-  echo 'Nakładka nie uruchomiła się. Sprawdź, czy port 8081 jest wolny.'
+  echo "Na porcie $OVERLAY działa już N2S Overlay. Zatrzymaj starą sesję n2s."
   exit 1
 fi
 
@@ -59,8 +51,29 @@ check_auth() {
   done
   return 0
 }
+if ! check_auth; then
+  echo "Aby bezpiecznie zamienić porty, ustaw w WebDAV FS PRO port 8081, uruchom jego serwer i dopiero wtedy uruchom n2s."
+  echo "N2S CLOUD użyje portu 8080. Nie wyłączam ani nie zmieniam działającego serwera WebDAV."
+  exit 1
+fi
+# Port 8080 must be free; never mask an accidental second server.
+if command -v ss >/dev/null 2>&1 && ss -ltn 2>/dev/null | grep -Eq '[:.]8080[[:space:]]'; then
+  echo 'Port 8080 jest zajęty. Wyłącz poprzedni serwer WebDAV na 8080, po przełączeniu go na 8081.'
+  exit 1
+fi
 
-echo 'N2S CLOUD — nakładka gotowa.'
+termux-wake-lock >/dev/null 2>&1 || true
+N2S_UPSTREAM_PORT="$PORT" N2S_PROXY_PORT="$OVERLAY" node "$PROXY_JS" &
+PROXY_PID=$!
+sleep 1
+if ! kill -0 "$PROXY_PID" 2>/dev/null ||
+   [ "$(curl -s --max-time 2 "http://127.0.0.1:$OVERLAY/_n2s_overlay_2026/health")" != 'N2S OK' ]; then
+  echo 'Nakładka nie uruchomiła się. Sprawdź, czy port 8080 jest wolny.'
+  exit 1
+fi
+
+
+echo 'N2S CLOUD — nakładka gotowa (8080). WebDAV FS PRO: 8081.'
 echo "Widok lokalny: http://127.0.0.1:$OVERLAY/"
 echo 'Publiczny adres: https://jargielo.gh.srv.us/n2s_cloude'
 echo 'Zatrzymanie: CTRL+C'
@@ -88,9 +101,9 @@ while true; do
     'https://jargielo.gh.srv.us/_n2s_overlay_2026/health' 2>/dev/null || true)"
   if [ "$PUBLIC_HEALTH" != 'N2S OK' ]; then
     echo 'UWAGA: Publiczny adres NIE wskazuje na nakladke N2S.'
-    echo 'Mozliwy drugi tunel na port 8080 lub nieaktywne mapowanie srv.us.'
+    echo 'Mozliwy drugi tunel na port 8081 lub nieaktywne mapowanie srv.us.'
     echo 'Zatrzymaj stary serwer/ssh -R w innej sesji Termuxa.'
-    echo 'Lokalnie nakladka pozostaje dostepna na http://127.0.0.1:8081/n2s_cloude'
+    echo 'Lokalnie nakladka pozostaje dostepna na http://127.0.0.1:8080/n2s_cloude'
   else
     echo 'OK: Publiczny tunel kieruje do N2S CLOUD.'
     # Probe the actual browser landing route, not only the health endpoint.
