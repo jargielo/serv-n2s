@@ -1,0 +1,101 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# N2S CLOUD: local visual overlay + protected WebDAV FS PRO + srv.us tunnel.
+set -u
+PORT=8080
+OVERLAY=8081
+KEY="$HOME/.ssh/id_ed25519"
+PROXY_JS="$HOME/.local/share/n2s-overlay/n2s-overlay.js"
+PROXY_PID=""
+TUNNEL_PID=""
+
+cleanup() {
+  trap - EXIT INT TERM
+  if [ -n "$TUNNEL_PID" ]; then
+    kill "$TUNNEL_PID" 2>/dev/null || true
+    wait "$TUNNEL_PID" 2>/dev/null || true
+  fi
+  if [ -n "$PROXY_PID" ]; then
+    kill "$PROXY_PID" 2>/dev/null || true
+    wait "$PROXY_PID" 2>/dev/null || true
+  fi
+  termux-wake-unlock >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+trap 'exit 0' INT TERM
+
+if [ ! -s "$KEY" ]; then
+  echo 'Nie znaleziono klucza SSH. Najpierw dokończ konfigurację GitHub.'
+  exit 1
+fi
+if [ ! -f "$PROXY_JS" ]; then
+  echo "Nie znaleziono nakładki: $PROXY_JS"
+  exit 1
+fi
+if curl -fsS --max-time 2 "http://127.0.0.1:$OVERLAY/_n2s_overlay_2026/health" >/dev/null 2>&1; then
+  echo 'Na porcie 8081 działa już N2S Overlay. Zatrzymaj poprzednią sesję n2s.'
+  exit 1
+fi
+
+termux-wake-lock >/dev/null 2>&1 || true
+N2S_UPSTREAM_PORT="$PORT" N2S_PROXY_PORT="$OVERLAY" node "$PROXY_JS" &
+PROXY_PID=$!
+sleep 1
+if ! kill -0 "$PROXY_PID" 2>/dev/null ||
+   [ "$(curl -s --max-time 2 "http://127.0.0.1:$OVERLAY/_n2s_overlay_2026/health")" != 'N2S OK' ]; then
+  echo 'Nakładka nie uruchomiła się. Sprawdź, czy port 8081 jest wolny.'
+  exit 1
+fi
+
+check_auth() {
+  local method result
+  for method in GET PROPFIND; do
+    result="$(curl -s --max-time 5 -o /dev/null -w '%{http_code}' \
+      -X "$method" -H 'Depth: 0' "http://127.0.0.1:$PORT/" 2>/dev/null || true)"
+    case "$result" in
+      401) ;;
+      000|'') echo "WebDAV FS PRO jest wyłączony lub port $PORT jest niedostępny."; return 1 ;;
+      *) echo "BLOKADA BEZPIECZEŃSTWA: $method bez loginu zwraca HTTP $result, a nie 401."; return 1 ;;
+    esac
+  done
+  return 0
+}
+
+echo 'N2S CLOUD — nakładka gotowa.'
+echo "Widok lokalny: http://127.0.0.1:$OVERLAY/"
+echo 'Publiczny adres: https://jargielo.gh.srv.us/'
+echo 'Zatrzymanie: CTRL+C'
+echo 'Odnowienie tunelu: co 60 minut.'
+
+while true; do
+  if ! check_auth; then
+    echo 'Oczekuję na serwer z aktywnym hasłem (15 s)...'
+    sleep 15
+    continue
+  fi
+  echo 'Hasło zweryfikowane (HTTP 401). Łączę tunel z nakładką...'
+  ssh -T -i "$KEY" \
+    -o IdentitiesOnly=yes -o BatchMode=yes \
+    -o StrictHostKeyChecking=accept-new \
+    -o ConnectTimeout=15 -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes \
+    -R "1:127.0.0.1:$OVERLAY" jargielo@srv.us &
+  TUNNEL_PID=$!
+  STARTED_AT=$SECONDS
+  while kill -0 "$TUNNEL_PID" 2>/dev/null; do
+    sleep 15
+    if [ $((SECONDS - STARTED_AT)) -ge 3600 ]; then
+      echo 'Minęło 60 minut. Odnawiam tunel...'
+      kill "$TUNNEL_PID" 2>/dev/null || true
+      break
+    fi
+    if ! check_auth; then
+      echo 'Zatrzymuję tunel: ochrona hasłem jest niedostępna.'
+      kill "$TUNNEL_PID" 2>/dev/null || true
+      break
+    fi
+  done
+  wait "$TUNNEL_PID" 2>/dev/null || true
+  TUNNEL_PID=""
+  echo 'Ponawiam połączenie za 5 sekund...'
+  sleep 5
+done
