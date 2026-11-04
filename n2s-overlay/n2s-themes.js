@@ -29,6 +29,8 @@
     if (!THEMES.some(t => t.id === id)) return;
     chosen = id;
     document.documentElement.dataset.n2sTheme = id;
+    const badge = document.querySelector('#n2s-active-theme');
+    if (badge) badge.textContent = THEMES.find(t => t.id === id).title;
     try { localStorage.setItem(KEY, id); } catch (_) {}
     document.querySelectorAll('.n2s-theme-card').forEach(card => {
       const selected = card.dataset.theme === id;
@@ -43,6 +45,10 @@
     if (!document.body || document.querySelector('#n2s-theme-root')) return;
     const root = make('div', 'n2s-theme-root');
     root.id = 'n2s-theme-root';
+    const activeBadge = make('div', 'n2s-active-theme');
+    activeBadge.id = 'n2s-active-theme';
+    activeBadge.textContent = THEMES.find(t=>t.id===chosen).title;
+    activeBadge.setAttribute('aria-live','polite');
     const toggle = make('button','n2s-theme-toggle','Motyw');
     toggle.type='button';
     toggle.setAttribute('aria-label','Wybierz wygląd N2S CLOUD');
@@ -94,7 +100,7 @@
     document.addEventListener('keydown',e=>{
       if(e.key==='Escape'&&!panel.hidden) open(false);
     });
-    root.append(toggle,panel);
+    root.append(activeBadge,toggle,panel);
     document.body.appendChild(root);
     setTheme(chosen);
     if (location.pathname === '/_n2s_overlay_2026/wyglad') open(true);
