@@ -23,7 +23,9 @@ const CSS_PATH = ASSET_PREFIX + 'style.css';
 const JS_PATH = ASSET_PREFIX + 'brand.js';
 const VIDEO_JS_PATH = ASSET_PREFIX + 'video.js';
 const VIDEO_CSS_PATH = ASSET_PREFIX + 'video.css';
-const INJECT = `<link rel="stylesheet" href="${CSS_PATH}"><link rel="stylesheet" href="${VIDEO_CSS_PATH}"><script defer src="${JS_PATH}"></script><script defer src="${VIDEO_JS_PATH}"></script>`;
+const THEME_JS_PATH = ASSET_PREFIX + 'themes.js';
+const THEME_CSS_PATH = ASSET_PREFIX + 'themes.css';
+const INJECT = `<link rel="stylesheet" href="${CSS_PATH}"><link rel="stylesheet" href="${VIDEO_CSS_PATH}"><script defer src="${JS_PATH}"></script><script defer src="${VIDEO_JS_PATH}"></script><link rel="stylesheet" href="${THEME_CSS_PATH}"><script defer src="${THEME_JS_PATH}"></script>`;
 const mediaRoutes = createMediaRoutes({host: HOST, port: UPSTREAM_PORT, prefix: ASSET_PREFIX});
 const HOP_HEADERS = ['connection', 'keep-alive', 'proxy-connection', 'te', 'trailer', 'transfer-encoding', 'upgrade'];
 
@@ -160,6 +162,18 @@ function requestHandler(req, res) {
       res.end('Brak komponentu: ' + assetName);
       return;
     }
+  }
+  if ((req.method === 'GET' || req.method === 'HEAD') &&
+      (reqPath === THEME_JS_PATH || reqPath === THEME_CSS_PATH ||
+       /^\/_n2s_overlay_2026\/themes\/(?:amoled|catalyst|pro)\.svg$/.test(reqPath))) {
+    const filename = reqPath === THEME_JS_PATH ? 'n2s-themes.js' :
+      reqPath === THEME_CSS_PATH ? 'n2s-themes.css' :
+      path.join('themes', reqPath.slice((ASSET_PREFIX + 'themes/').length));
+    const file = path.join(__dirname, filename);
+    const type = reqPath.endsWith('.js') ? 'application/javascript; charset=utf-8' :
+      reqPath.endsWith('.css') ? 'text/css; charset=utf-8' : 'image/svg+xml';
+    try { return noCache(res, type, fs.readFileSync(file, 'utf8'), req.method === 'HEAD'); }
+    catch (_) { res.writeHead(503); res.end('Brak motywu'); return; }
   }
   if (reqPath.startsWith(ASSET_PREFIX)) {
     res.writeHead(404, {'Cache-Control':'no-store'}); res.end(); return;
