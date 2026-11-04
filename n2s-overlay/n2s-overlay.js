@@ -141,6 +141,52 @@ function requestHandler(req, res) {
   try { reqPath = new URL(req.url, 'http://localhost').pathname; }
   catch (_) { res.writeHead(400); res.end(); return; }
   if (mediaRoutes(req, res, reqPath)) return;
+  // Standalone N2S file manager, separate from the original WebDAV interface.
+  // The HTML entry is authorized by the original WebDAV server. No fake login.
+  if ((req.method === 'GET' || req.method === 'HEAD') &&
+      (reqPath === ASSET_PREFIX + 'app' || reqPath === ASSET_PREFIX + 'app/')) {
+    const probeHeaders = {};
+    if (req.headers.authorization) probeHeaders.authorization = req.headers.authorization;
+    if (req.headers.cookie) probeHeaders.cookie = req.headers.cookie;
+    const probe = http.request({
+      hostname: HOST,port:UPSTREAM_PORT,method:'PROPFIND',path:'/',
+      headers:{...probeHeaders,Depth:'0',Host:'127.0.0.1:'+UPSTREAM_PORT}
+    }, upstream => {
+      const code=upstream.statusCode;
+      upstream.resume();
+      if (code === 401 || code === 403) {
+        res.writeHead(code, {
+          'WWW-Authenticate': upstream.headers['www-authenticate'] || 'Basic realm="WebDAV FS PRO"',
+          'Cache-Control':'no-store'
+        });res.end();return;
+      }
+      if (code !== 207) {
+        res.writeHead(503,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'});
+        res.end('WebDAV FS PRO nie udostepnia katalogu PROPFIND.');return;
+      }
+      try {
+        const html=fs.readFileSync(path.join(__dirname,'app.html'),'utf8');
+        noCache(res,'text/html; charset=utf-8',html,req.method==='HEAD');
+      } catch (_) {
+        res.writeHead(503);res.end('Brak plikow aplikacji'); 
+      }
+    });
+    probe.setTimeout(7000,()=>probe.destroy(new Error('WebDAV timeout')));
+    probe.on('error',()=>{
+      if (!res.headersSent) {res.writeHead(502);res.end('Serwer WebDAV niedostepny');}
+    });
+    probe.end();
+    return;
+  }
+  if ((req.method === 'GET' || req.method === 'HEAD') &&
+      (reqPath === ASSET_PREFIX + 'app.css' || reqPath === ASSET_PREFIX + 'app.js')) {
+    const js=reqPath.endsWith('.js');
+    try {
+      const content=fs.readFileSync(path.join(__dirname,js?'app.js':'app.css'),'utf8');
+      return noCache(res,js?'application/javascript; charset=utf-8':'text/css; charset=utf-8',content,req.method==='HEAD');
+    } catch (_) {res.writeHead(503);res.end('Brak zasobow aplikacji');return;}
+  }
+
   if ((req.method === 'GET' || req.method === 'HEAD') && reqPath === ASSET_PREFIX + 'wyglad') {
     const themePage = `<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>N2S CLOUD — wybierz motyw</title><link rel="stylesheet" href="${THEME_CSS_PATH}"><style>html,body{min-height:100%;margin:0;background:#0c0d0f;color:#f8f8f8;font-family:system-ui,sans-serif}main{max-width:500px;margin:0 auto;padding:24px 18px 160px}h1{font-size:25px;margin:10px 0}p{color:#c3c7cc;line-height:1.5}a{color:#ff9b42}body .n2s-theme-root{position:static!important;padding:16px}body .n2s-theme-toggle{display:none!important}body .n2s-theme-panel{display:block!important;position:static!important;max-height:none!important;width:min(100%,500px)!important;box-sizing:border-box;margin:0 auto!important}body .n2s-theme-actions{display:none!important}</style></head><body><main><h1>N2S CLOUD — Motywy</h1><p>Wybierz wygląd. Zmiana zapisze się w tej przeglądarce.</p><p><a href="/">Powrót do plików</a></p></main><script defer src="${THEME_JS_PATH}"></script></body></html>`;
     return noCache(res, 'text/html; charset=utf-8', themePage, req.method === 'HEAD');
