@@ -11,6 +11,11 @@ const BASE = 'https://jargielo.gh.srv.us';
 function makeDom(body) {
   const dom = new JSDOM('<!doctype html><html><head><title>N2S CLOUD</title></head><body>' + body + '</body></html>',
     {url: BASE+'/', runScripts:'outside-only', pretendToBeVisual:true});
+  // jsdom does not implement navigation; suppress browser defaults while still
+  // allowing N2S capture listeners to be exercised.
+  dom.window.document.addEventListener('click', event => {
+    if (event.target.closest?.('a[href]')) event.preventDefault();
+  });
   dom.window.eval(script);
   return dom;
 }
@@ -31,7 +36,6 @@ test('clicking a video file offers Android chooser and VLC without exposing any 
   assert.match(links[0].getAttribute('href'), /action=android.intent.action.VIEW/);
   assert.match(links[1].getAttribute('href'), /package=org\.videolan\.vlc/);
   assert.ok(!links[0].getAttribute('href').includes('@'));
-  dom.window.close();
 });
 
 test('nonvideo links, SPA hash routes, and URLs with embedded login are not intercepted', () => {
@@ -45,7 +49,6 @@ test('nonvideo links, SPA hash routes, and URLs with embedded login are not inte
     document.getElementById(id).dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, button:0}));
     assert.equal(document.querySelector('[role="dialog"]'),null, 'no menu for '+id);
   }
-  dom.window.close();
 });
 
 test('visible HTML video preview gets an external player action', async () => {
@@ -59,5 +62,4 @@ test('visible HTML video preview gets an external player action', async () => {
   const dialog = dom.window.document.querySelector('[role="dialog"]');
   assert.ok(dialog);
   assert.match(dialog.textContent,/wideo.mp4/);
-  dom.window.close();
 });
