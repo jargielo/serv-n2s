@@ -45,3 +45,143 @@ html[data-n2s-theme="pro"] body {background:linear-gradient(125deg,#0a0b0d,#1113
 @media(min-width:900px){.n2s-theme-root{bottom:22px;right:24px;}.n2s-theme-panel{width:440px;}}
 @media(max-width:440px){.n2s-theme-root{right:10px;bottom:78px;}.n2s-theme-panel{width:calc(100vw - 20px);right:0;}}
 @media(prefers-reduced-motion:reduce){.n2s-theme-root *{transition:none!important;}}
+
+
+/* N2S CLOUD 2.1 — real skin instead of background-only coloring.
+   Scope below deliberately excludes our own dialogs / overlay controls.
+   It never hides or removes native WebDAV file operations. */
+:root[data-n2s-theme] {
+ --n2s-row-radius: 12px;
+ --n2s-highlight: color-mix(in srgb, var(--n2s-accent) 18%, transparent);
+ --n2s-header: #181b20;
+ --n2s-row: #1c2026;
+ --n2s-row-hover: #29323d;
+ --n2s-bar: linear-gradient(90deg,var(--n2s-accent),transparent 76%);
+}
+:root[data-n2s-theme="amoled"] {
+ --n2s-header: #000000;
+ --n2s-row: #050609;
+ --n2s-row-hover: #131923;
+ --n2s-row-radius: 4px;
+ --n2s-bar: linear-gradient(90deg,#46c7ff,#a44dff);
+}
+:root[data-n2s-theme="catalyst"] {
+ --n2s-header: #201b18;
+ --n2s-row: #25252a;
+ --n2s-row-hover: #3a3029;
+ --n2s-row-radius: 15px;
+ --n2s-bar: linear-gradient(90deg,#ff8b2b,#c3541f,#241b19);
+}
+:root[data-n2s-theme="pro"] {
+ --n2s-header: #171b20;
+ --n2s-row: #252b33;
+ --n2s-row-hover: #343e4d;
+ --n2s-row-radius: 2px;
+ --n2s-bar: linear-gradient(90deg,#dce3ee,#52647b);
+}
+/* Top border makes theme changes clearly visible, even when vendor styles
+   render their own opaque content layers. */
+:root[data-n2s-theme] body::before {
+ content: '';
+ position: fixed;
+ display:block;
+ top:0; left:0; right:0;
+ height: 4px;
+ z-index: 2147481980;
+ background: var(--n2s-bar);
+ pointer-events: none;
+}
+:root[data-n2s-theme] body :is(
+  header, nav, aside, footer,
+  [class*="header"],[class*="Header"],
+  [class*="toolbar"],[class*="Toolbar"],
+  [class*="navbar"],[class*="Navbar"]
+):not(.n2s-theme-root):not(.n2s-theme-panel):not(.n2s-video-shade) {
+ background-color: var(--n2s-header)!important;
+ border-color: var(--n2s-border)!important;
+ color: var(--n2s-text)!important;
+}
+:root[data-n2s-theme] body :is(
+  main, [role="main"],
+  [class*="file-list"],[class*="fileList"],[class*="FileList"],
+  [class*="folder-list"],[class*="FolderList"]
+):not(.n2s-theme-root) {
+ background-color: var(--n2s-bg)!important;
+ color: var(--n2s-text)!important;
+}
+:root[data-n2s-theme] body :is(
+ [class*="file-item"],[class*="fileItem"],[class*="FileItem"],
+ [class*="folder-item"],[class*="folderItem"],[class*="FolderItem"],
+ [class*="list-item"],[class*="listItem"],[class*="ListItem"],
+ [class*="file-row"],[class*="FileRow"],
+ [class*="folder-row"],[class*="FolderRow"],
+ [role="listitem"],table tbody tr
+):not(.n2s-theme-card):not(.n2s-theme-root) {
+ background: var(--n2s-row)!important;
+ color: var(--n2s-text)!important;
+ border: 1px solid var(--n2s-border)!important;
+ border-radius: var(--n2s-row-radius)!important;
+}
+:root[data-n2s-theme] body :is(
+ [class*="file-item"],[class*="fileItem"],[class*="FileItem"],
+ [class*="folder-item"],[class*="folderItem"],[class*="FolderItem"],
+ [class*="list-item"],[class*="listItem"],[class*="ListItem"],
+ [role="listitem"], table tbody tr
+):hover {
+ background-color: var(--n2s-row-hover)!important;
+}
+:root[data-n2s-theme] body :is(
+ [class*="card"],[class*="Card"],
+ [class*="panel"],[class*="Panel"]
+):not(.n2s-theme-card):not(.n2s-theme-panel):not(.n2s-video-dialog) {
+ border-color: var(--n2s-border)!important;
+ border-radius: var(--n2s-row-radius)!important;
+}
+:root[data-n2s-theme] body :is(input[type="search"],input[type="text"],[role="searchbox"]) {
+ background-color: var(--n2s-row)!important;
+ color: var(--n2s-text)!important;
+ border: 1px solid var(--n2s-border)!important;
+ border-radius: var(--n2s-row-radius)!important;
+}
+:root[data-n2s-theme] body :is(button,[role="button"]):not(.n2s-theme-card):not(.n2s-theme-toggle):not(.n2s-theme-close):not(.n2s-video-action):not(.n2s-video-pick) {
+ border-radius: var(--n2s-row-radius);
+}
+:root[data-n2s-theme] body :is(button[aria-pressed="true"],button[aria-selected="true"],[aria-current="page"]):not(.n2s-theme-card) {
+ outline-color: var(--n2s-accent)!important;
+ box-shadow: inset 0 -2px var(--n2s-accent);
+}
+:root[data-n2s-theme="amoled"] body :is(
+ [class*="file-item"],[class*="FileItem"],[class*="folder-item"],[class*="FolderItem"],[role="listitem"]
+) {
+ border-left: 3px solid #32bafb!important;
+}
+:root[data-n2s-theme="catalyst"] body :is(
+ [class*="file-item"],[class*="FileItem"],[class*="folder-item"],[class*="FolderItem"],[role="listitem"]
+) {
+ box-shadow: 0 4px 16px #0005, inset 2px 0 #ff882b80!important;
+}
+:root[data-n2s-theme="pro"] body :is(
+ [class*="file-item"],[class*="FileItem"],[class*="folder-item"],[class*="FolderItem"],[role="listitem"]
+) {
+ border-left: 2px solid #737f90!important;
+}
+.n2s-active-theme {
+ display: inline-flex;
+ position: absolute;
+ right: calc(100% + 9px);
+ bottom: 6px;
+ min-width: max-content;
+ padding: 8px 11px;
+ background: var(--n2s-panel);
+ color: var(--n2s-accent);
+ border: 1px solid var(--n2s-border);
+ border-radius: 10px;
+ font-weight: 700;
+ box-shadow:0 4px 14px #0008;
+ pointer-events:none;
+}
+@media (max-width:400px) {
+ .n2s-active-theme{font-size:11px;padding:7px;}
+}
+/* Dedicated theme picker page: visible list, not a floating invisible widget. */
+body:has(main a[href="/"]) .n2s-active-theme {display:none;}
