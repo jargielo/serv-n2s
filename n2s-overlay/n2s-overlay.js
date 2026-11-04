@@ -76,6 +76,21 @@ function scriptForName(name) {
   return `(()=>{
 'use strict';
 const BRAND=${JSON.stringify(name)};
+const N2S_ROUTE='/n2s_cloude';
+function repairMisroutedN2S() {
+  // WebDAV FS PRO's hash router treats #/n2s_cloude as a folder.
+  // Fragment paths are never sent to the server; repair in the browser.
+  const hash=window.location.hash||'';
+  if (!/^#\\/(?:n2s_cloude|_n2s_overlay_2026\\/app)\\/?(?:[?#]|$)/i.test(hash)) return false;
+  if (window.location.pathname === N2S_ROUTE) {
+    window.history.replaceState(window.history.state, '', N2S_ROUTE);
+    return true;
+  }
+  window.location.replace(window.location.origin+N2S_ROUTE);
+  return true;
+}
+if (repairMisroutedN2S()) return;
+window.addEventListener('hashchange',repairMisroutedN2S);
 const TITLES=new Set(['webdav fs pro','webdav fs','webdav fs ui','n2s cloud','webdav n2s']);
 let scheduled=false;
 function updateBrand(){
