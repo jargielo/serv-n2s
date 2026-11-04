@@ -45,6 +45,13 @@ test('N2S Overlay preserves WebDAV auth and file methods',async t=>{
   assert.match(html.body,/_n2s_overlay_2026\/brand\.js/);
   assert.match(html.body,/_n2s_overlay_2026\/video\.js/);
   assert.match(html.body,/_n2s_overlay_2026\/video\.css/);
+  assert.match(html.body, /_n2s_overlay_2026\/themes\.js/);
+  assert.match(html.body, /_n2s_overlay_2026\/themes\.css/);
+  for (const asset of ['themes.js', 'themes.css', 'themes/amoled.svg', 'themes/catalyst.svg', 'themes/pro.svg']) {
+    const file=await request('/_n2s_overlay_2026/'+asset);
+    assert.equal(file.status, 200, 'theme asset '+asset);
+    assert.ok(file.body.length > 40, 'nonempty theme asset '+asset);
+  }
   const js=await request('/_n2s_overlay_2026/brand.js');
   assert.match(js.body,/N2S CLOUD/);
   const playerScript=await request('/_n2s_overlay_2026/video.js');
