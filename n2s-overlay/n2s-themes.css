@@ -185,3 +185,30 @@ html[data-n2s-theme="pro"] body {background:linear-gradient(125deg,#0a0b0d,#1113
 }
 /* Dedicated theme picker page: visible list, not a floating invisible widget. */
 body:has(main a[href="/"]) .n2s-active-theme {display:none;}
+
+/* Theme picker itself responds instantly, useful for verifying selection. */
+:root[data-n2s-theme] .n2s-theme-panel {
+ background: var(--n2s-panel)!important;
+ border-color: var(--n2s-accent)!important;
+ box-shadow: 0 16px 60px #000b, inset 0 3px 0 var(--n2s-accent)!important;
+}
+:root[data-n2s-theme] .n2s-theme-title {
+ color: var(--n2s-text)!important;
+}
+:root[data-n2s-theme] .n2s-theme-card {
+ background: var(--n2s-row)!important;
+ border-color: var(--n2s-border)!important;
+ border-radius: var(--n2s-row-radius)!important;
+}
+:root[data-n2s-theme] .n2s-theme-card.is-selected {
+ border-color: var(--n2s-accent)!important;
+ box-shadow: inset 3px 0 0 var(--n2s-accent), 0 0 0 1px var(--n2s-accent)!important;
+}
+:root[data-n2s-theme] .n2s-theme-toggle,
+:root[data-n2s-theme] .n2s-theme-close {
+ background: var(--n2s-header)!important;
+ color: var(--n2s-text)!important;
+}
+:root[data-n2s-theme="amoled"] .n2s-theme-panel {border-radius:4px!important;}
+:root[data-n2s-theme="catalyst"] .n2s-theme-panel {border-radius:20px!important;}
+:root[data-n2s-theme="pro"] .n2s-theme-panel {border-radius:2px!important;}
