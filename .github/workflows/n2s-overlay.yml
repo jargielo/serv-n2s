@@ -36,3 +36,5 @@ jobs:
         run: npm install --no-save --no-package-lock jsdom@26.1.0
       - name: Test browser player chooser
         run: node --test n2s-overlay/tests/video.test.js
+      - name: Test live theme switching
+        run: node --test n2s-overlay/tests/themes.test.js
