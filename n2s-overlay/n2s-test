@@ -1,0 +1,36 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Sprawdza N2S bez odczytywania ani wysylania hasel.
+WEB='http://127.0.0.1:8080/'
+PROXY='http://127.0.0.1:8081/'
+PUBLIC='https://jargielo.gh.srv.us/'
+echo 'N2S CLOUD / DIAGNOSTYKA'
+check() {
+  curl --noproxy '*' -s -m 5 -o /dev/null -w '%{http_code}' -X "$1" -H 'Depth: 0' "$2" 2>/dev/null || true
+}
+CODE_GET="$(check GET "$WEB")"
+CODE_DAV="$(check PROPFIND "$WEB")"
+echo "WebDAV: GET=$CODE_GET PROPFIND=$CODE_DAV (oczekiwane 401 i 401)"
+LOCAL_HEALTH="$(curl --noproxy '*' -fsS -m 5 "$PROXY"_n2s_overlay_2026/health 2>/dev/null || true)"
+echo "Nakladka na 8081: $LOCAL_HEALTH (oczekiwane N2S OK)"
+JS="$(curl --noproxy '*' -fsS -m 5 "$PROXY"_n2s_overlay_2026/brand.js 2>/dev/null || true)"
+if printf '%s' "$JS" | grep -Fq "const BRAND="; then
+  echo 'Branding: skrypt nazwy jest dostepny'
+else
+  echo 'Branding: nie udalo sie pobrac'
+fi
+echo 'Sprawdzam tunel publiczny...'
+PUBLIC_HEALTH="$(curl -fsS --connect-timeout 5 --max-time 15 "$PUBLIC"_n2s_overlay_2026/health 2>/dev/null || true)"
+PUBLIC_GET="$(curl -sS --connect-timeout 5 --max-time 15 -o /dev/null -w '%{http_code}' "$PUBLIC" 2>/dev/null || true)"
+echo "Publiczny adres: HTTP $PUBLIC_GET; Nakladka: $PUBLIC_HEALTH"
+if [ "$CODE_GET" = 401 ] && [ "$CODE_DAV" = 401 ] && [ "$PUBLIC_HEALTH" = 'N2S OK' ] && [ "$PUBLIC_GET" = 401 ]; then
+  echo 'WYNIK: DZIALA. Otworz https://jargielo.gh.srv.us/'
+  exit 0
+fi
+echo 'WYNIK: NIEPOTWIERDZONE.'
+if [ "$LOCAL_HEALTH" = 'N2S OK' ]; then
+  echo 'Nakladka lokalna dziala, ale publiczny tunel moze byc zajety.'
+  echo 'Zatrzymaj stary tunel serwer i uruchom tylko n2s.'
+else
+  echo 'Uruchom WebDAV FS PRO z haslem, a nastepnie polecenie n2s.'
+fi
+exit 1
