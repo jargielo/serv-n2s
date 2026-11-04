@@ -1,0 +1,47 @@
+/* N2S CLOUD 2.0 — trzy motywy; jedynie CSS, bez modyfikowania API WebDAV. */
+:root[data-n2s-theme] {
+ color-scheme: dark;
+ --n2s-bg:#111316; --n2s-panel:#1b1e23; --n2s-border:#343943;
+ --n2s-text:#f3f5f8; --n2s-muted:#b3bbc7; --n2s-accent:#ff8729;
+}
+:root[data-n2s-theme="amoled"] {
+ --n2s-bg:#000; --n2s-panel:#0b0e12; --n2s-border:#20252d;
+ --n2s-text:#fff; --n2s-muted:#b7bec7; --n2s-accent:#4bb8fa;
+}
+:root[data-n2s-theme="catalyst"] {
+ --n2s-bg:#101114; --n2s-panel:#1d2026; --n2s-border:#373c43;
+ --n2s-text:#fbfbfc; --n2s-muted:#bac0c9; --n2s-accent:#ff882b;
+}
+:root[data-n2s-theme="pro"] {
+ --n2s-bg:#08090b; --n2s-panel:#181a1e; --n2s-border:#414348;
+ --n2s-text:#f0f1f3; --n2s-muted:#a7a9ae; --n2s-accent:#e5e7eb;
+}
+html[data-n2s-theme] {background:var(--n2s-bg)!important; color-scheme:dark;}
+html[data-n2s-theme] body {background:var(--n2s-bg)!important; color:var(--n2s-text)!important;}
+html[data-n2s-theme] .n2s-brand-text {color:var(--n2s-text)!important;}
+html[data-n2s-theme] .n2s-brand-text::before {border-color:var(--n2s-border)!important; color:var(--n2s-accent)!important; background:var(--n2s-panel)!important;}
+/* Noninvasive styling: theme page background and common surface patterns, not native file icons/data cells. */
+html[data-n2s-theme="catalyst"] body {background:radial-gradient(ellipse at 90% -10%,#27201b 0%,#101114 35%,#101114 100%)!important;}
+html[data-n2s-theme="pro"] body {background:linear-gradient(125deg,#0a0b0d,#111317)!important;}
+.n2s-theme-root {position:fixed;bottom:86px;right:14px;z-index:2147482000;font:14px/1.4 system-ui,sans-serif;}
+.n2s-theme-root * {box-sizing:border-box;}
+.n2s-theme-toggle {background:var(--n2s-panel)!important;color:var(--n2s-text)!important;border:1px solid var(--n2s-accent)!important;border-radius:15px!important;box-shadow:0 6px 20px #0009!important;padding:12px 18px!important;font:600 14px system-ui,sans-serif!important;cursor:pointer;min-height:46px;}
+.n2s-theme-toggle::before {content:'◐';color:var(--n2s-accent);margin-right:8px;font-weight:800;}
+.n2s-theme-panel {position:absolute;bottom:56px;right:0;background:#14171b;color:#f5f6f8;width:min(90vw,390px);max-height:min(75vh,690px);overflow:auto;border:1px solid #49515b;box-shadow:0 15px 60px #000c;padding:17px;border-radius:19px;}
+.n2s-theme-panel[hidden] {display:none!important;}
+.n2s-theme-title {font-size:20px;font-weight:750;}
+.n2s-theme-subtitle {font-size:13px;color:#b6bdc7;margin:8px 0;}
+.n2s-theme-status {font-size:12px;color:#c8cbd1;margin:9px 0 15px;}
+.n2s-theme-current {color:var(--n2s-accent);}
+.n2s-theme-grid {display:grid;grid-template-columns:1fr;gap:10px;}
+.n2s-theme-card {width:100%;display:grid!important;grid-template-columns:110px 1fr;grid-template-rows:auto auto;align-items:center;gap:3px 12px;padding:10px!important;border:1px solid #3c454e!important;border-radius:12px!important;color:#f5f5f7!important;background:#25292e!important;text-align:left!important;cursor:pointer;}
+.n2s-theme-card.is-selected {border-color:var(--n2s-accent)!important;box-shadow:inset 0 0 0 1px var(--n2s-accent);}
+.n2s-theme-preview {grid-row:span 2;display:block!important;width:110px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #343840;}
+.n2s-theme-name {font-weight:700;font-size:14px;align-self:end;}
+.n2s-theme-desc {font-size:11px;color:#c6cbd3;align-self:start;}
+.n2s-theme-actions {display:flex;justify-content:end;margin-top:12px;}
+.n2s-theme-close {padding:9px 15px!important;background:#333941!important;border:1px solid #505761!important;color:#fff!important;border-radius:10px!important;cursor:pointer;}
+.n2s-theme-toggle:focus-visible,.n2s-theme-card:focus-visible,.n2s-theme-close:focus-visible{outline:2px solid #f9f9f9!important;outline-offset:2px;}
+@media(min-width:900px){.n2s-theme-root{bottom:22px;right:24px;}.n2s-theme-panel{width:440px;}}
+@media(max-width:440px){.n2s-theme-root{right:10px;bottom:78px;}.n2s-theme-panel{width:calc(100vw - 20px);right:0;}}
+@media(prefers-reduced-motion:reduce){.n2s-theme-root *{transition:none!important;}}
