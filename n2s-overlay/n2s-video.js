@@ -11,6 +11,7 @@
   let currentVideo = null;
   let scheduled = false;
   const allowNativeClick = new WeakSet();
+  const allowNativeRowClick = new WeakSet();
 
   function absoluteMediaUrl(raw) {
     if (!raw || typeof raw !== 'string') return null;
@@ -41,6 +42,57 @@
     if (url.hash && EXT.test(url.hash) && !EXT.test(url.pathname)) return null;
     if (!EXT.test(url.pathname)) return null;
     return absoluteMediaUrl(raw);
+  }
+
+
+  // WebDAV FS PRO is a hash-based SPA and displays files as clickable rows,
+  // not necessarily as <a href="file.mp4"> links. Build a direct URL using the
+  // visible filename and the current folder hash route.
+  function currentFolderPath() {
+    const hash=location.hash || '';
+    if (!hash.startsWith('#/')) return null;
+    let route=hash.slice(1).split('?')[0].split('#')[0];
+    if (!route.startsWith('/') || route.startsWith('//')) return null;
+    const parts=route.split('/').filter(Boolean);
+    const encoded=[];
+    for(const part of parts){
+      let name;
+      try{name=decodeURIComponent(part);}catch{return null;}
+      if(!name || name==='.' || name==='..' || /[\\\0\r\n]/.test(name))return null;
+      encoded.push(encodeURIComponent(name));
+    }
+    return '/'+encoded.join('/')+(encoded.length?'/':'');
+  }
+  function filenameFromText(value) {
+    if (!value || typeof value!=='string') return null;
+    const text=value.trim();
+    if(text.length<5 || text.length>260 || /[\\/\0\r\n]/.test(text))return null;
+    if(!EXT.test(text))return null;
+    return text;
+  }
+  function inferVideoFromRow(target) {
+    if (!(target instanceof Element))return null;
+    // Tapping a three-dot menu or an action button must keep working.
+    if (target.closest('button,[role="button"],[aria-haspopup],input,select,textarea') &&
+        !target.closest('a[href]'))return null;
+    const folder=currentFolderPath();
+    if(folder===null)return null;
+    const candidates=[target,...(function*(e){for(let i=0;i<4&&e;i++,e=e.parentElement)yield e;})(target.parentElement)];
+    for(const node of candidates){
+      // Select a leaf/label before the parent card. This avoids mixing
+      // filenames with sizes, dates, and action captions.
+      const strings=[
+        node.getAttribute('title'),node.getAttribute('aria-label'),
+        node.dataset?.filename, node.dataset?.name,
+        node.children.length===0?node.textContent:null
+      ];
+      for(const value of strings){
+        const name=filenameFromText(value);
+        if(!name)continue;
+        return {url:location.origin+folder+encodeURIComponent(name),name};
+      }
+    }
+    return null;
   }
 
   function videoSource(video) {
@@ -342,16 +394,30 @@
   document.addEventListener('click', event => {
     if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.shiftKey ||
         event.metaKey || event.altKey) return;
-    if (!(event.target instanceof Element) || event.target.closest('.' + MARKER)) return;
+    if (!(event.target instanceof Element) || event.target.closest('.' + MARKER) || allowNativeRowClick.has(event.target)) return;
     const anchor = event.target.closest('a[href]');
-    if (!anchor || allowNativeClick.has(anchor)) return;
-    const url = videoLink(anchor);
-    if (!url) return;
+    const url = anchor ? videoLink(anchor) : null;
+    if (url && !allowNativeClick.has(anchor)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openMenu(url, () => {
+        allowNativeClick.add(anchor);
+        try { anchor.click(); } finally { allowNativeClick.delete(anchor); }
+      });
+      return;
+    }
+    // Handle clickable native SPA file rows with a visible filename but no
+    // direct link. This is the common WebDAV FS PRO folder layout.
+    if (anchor) return;
+    const inferred=inferVideoFromRow(event.target);
+    if (!inferred) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    openMenu(url, () => {
-      allowNativeClick.add(anchor);
-      try { anchor.click(); } finally { allowNativeClick.delete(anchor); }
+    openMenu(inferred.url, () => {
+      // Open the vendor's native preview without recapturing the click.
+      allowNativeRowClick.add(event.target);
+      try { event.target.click(); }
+      finally { allowNativeRowClick.delete(event.target); }
     });
   }, true);
 
