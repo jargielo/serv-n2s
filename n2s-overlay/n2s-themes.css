@@ -212,3 +212,20 @@ body:has(main a[href="/"]) .n2s-active-theme {display:none;}
 :root[data-n2s-theme="amoled"] .n2s-theme-panel {border-radius:4px!important;}
 :root[data-n2s-theme="catalyst"] .n2s-theme-panel {border-radius:20px!important;}
 :root[data-n2s-theme="pro"] .n2s-theme-panel {border-radius:2px!important;}
+
+/* Reliable entry to the independent N2S file manager (old page). */
+.n2s-app-launch {
+  display:block!important;
+  margin:0 0 9px auto!important;
+  min-height:43px;
+  padding:10px 14px!important;
+  border:1px solid var(--n2s-accent,#ff892e)!important;
+  border-radius:12px!important;
+  background:#15191fee!important;
+  color:#fff!important;
+  font:700 13px system-ui,sans-serif!important;
+  box-shadow:0 5px 20px #0008!important;
+  cursor:pointer;
+}
+.n2s-app-launch::before{content:'▦';color:var(--n2s-accent,#ff892e);margin-right:8px;}
+.n2s-app-launch:focus-visible{outline:2px solid var(--n2s-accent,#ff892e)!important;}
