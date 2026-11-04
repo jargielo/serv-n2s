@@ -22,7 +22,7 @@
       if (!/^https?:$/.test(uri.protocol) || uri.username || uri.password) return null;
       if (uri.origin !== location.origin) {
         const localBackend = (uri.hostname === '127.0.0.1' || uri.hostname === 'localhost') &&
-          uri.port === '8080';
+          uri.port === '8081';
         if (!localBackend) return null;
         return location.origin + uri.pathname + uri.search;
       }
@@ -468,7 +468,7 @@
     try {
       const u=new URL(raw,location.origin);
       if(u.origin!==location.origin &&
-         !((u.hostname==='localhost'||u.hostname==='127.0.0.1')&&u.port==='8080'))return null;
+         !((u.hostname==='localhost'||u.hostname==='127.0.0.1')&&u.port==='8081'))return null;
       return u.pathname;
     } catch (_) { return null; }
   }
