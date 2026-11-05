@@ -1,0 +1,36 @@
+name: N2S live connection diagnostic
+
+on:
+  push:
+    paths:
+      - '.github/workflows/n2s-live-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  connectivity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: DNS and public tunnel endpoint checks (no credentials)
+        shell: bash
+        run: |
+          set -u
+          echo 'DNS lookup:'
+          getent ahostsv4 jargielo.gh.srv.us || true
+          for path in /_n2s_overlay_2026/health / /n2s_cloude; do
+            printf '\nPUBLIC REQUEST: %s\n' "$path"
+            curl --silent --show-error --max-time 12 --connect-timeout 5 \
+              -D /tmp/n2s-header.txt -o /tmp/n2s-body.txt \
+              -H 'Accept: text/html' \
+              -w 'HTTP=%{http_code} DNS=%{time_namelookup}s CONNECT=%{time_connect}s TOTAL=%{time_total}s\n' \
+              "https://jargielo.gh.srv.us$path" || true
+            grep -Ei '^(HTTP/|location:|content-type:)' /tmp/n2s-header.txt 2>/dev/null || true
+            echo 'Body excerpt:'
+            head -c 280 /tmp/n2s-body.txt 2>/dev/null || true
+            printf '\n'
+            : > /tmp/n2s-header.txt
+            : > /tmp/n2s-body.txt
+          done
