@@ -7,7 +7,7 @@ mkdir -p "$TARGET" "$HOME/.config/n2s-overlay"
 printf '\n[N2S CLOUD] Instalowanie narzędzi Termux...\n'
 pkg install -y nodejs openssh curl coreutils
 
-for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css app.html app.js app.css n2s n2s-nazwa; do
+for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css app.html app.js app.css n2s n2s-ports.sh n2s-nazwa; do
   printf 'Pobieram %s...\n' "$FILE"
   curl -fLsS --connect-timeout 15 --max-time 60 "$REPO/$FILE" -o "$TARGET/$FILE.new"
 done
@@ -16,8 +16,9 @@ node --check --input-type=commonjs < "$TARGET/n2s-media.js.new"
 node --check < "$TARGET/n2s-video.js.new"
 node --check < "$TARGET/app.js.new"
 bash -n "$TARGET/n2s.new"
+bash -n "$TARGET/n2s-ports.sh.new"
 bash -n "$TARGET/n2s-nazwa.new"
-for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css app.html app.js app.css n2s n2s-nazwa; do
+for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css app.html app.js app.css n2s n2s-ports.sh n2s-nazwa; do
   mv "$TARGET/$FILE.new" "$TARGET/$FILE"
 done
 # Remove legacy themes from existing Termux installations after new files validate.
@@ -33,11 +34,11 @@ if [ ! -s "$HOME/.config/n2s-overlay/name.txt" ]; then
   chmod 600 "$HOME/.config/n2s-overlay/name.txt"
 fi
 
-printf '\nZainstalowano nakładkę. WebDAV FS PRO musi być najpierw przełączony w aplikacji na port 8081 i zabezpieczony hasłem.\n'
-printf 'N2S CLOUD uruchomi się na porcie 8080. Stary tunel należy zatrzymać przez CTRL+C.\n'
+printf '\nZainstalowano nakładkę. WebDAV FS PRO powinien dzialac na porcie 8080 lub 8081 i wymagac loginu i hasla.\n'
+printf 'N2S CLOUD automatycznie wybierze drugi, wolny port. Zatrzymaj stary tunel przez CTRL+C.\n'
 printf 'Po restarcie nakladki opcja Wybierz odtwarzacz pojawi sie przy filmach.\n'
 printf 'Nowy interfejs: https://jargielo.gh.srv.us/n2s_cloude\n'
-printf 'Porty: N2S CLOUD 8080, WebDAV FS PRO 8081.\n'
+printf 'Porty: automatyczny wybor 8080/8081. Przy WebDAV 8080, N2S CLOUD bedzie na 8081.\n'
 printf 'Uruchamianie: n2s\n'
 printf 'Zmiana nazwy: n2s-nazwa "MOJA CHMURA"\n\n'
 exec "$PREFIX/bin/n2s"
