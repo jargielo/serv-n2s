@@ -27,6 +27,7 @@ jobs:
           node --check n2s-overlay/app.js
           bash -n n2s-overlay/n2s
           bash -n n2s-overlay/n2s-ports.sh
+          bash -n n2s-overlay/n2s-diagnoza.sh
           bash -n n2s-overlay/n2s-nazwa
           bash -n n2s-overlay/install-overlay.sh
       - name: Test automatic port detection
