@@ -7,7 +7,7 @@ mkdir -p "$TARGET" "$HOME/.config/n2s-overlay"
 printf '\n[N2S CLOUD] Instalowanie narzędzi Termux...\n'
 pkg install -y nodejs openssh curl coreutils
 
-for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css app.html app.js app.css n2s n2s-ports.sh n2s-nazwa; do
+for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css app.html app.js app.css n2s n2s-ports.sh n2s-diagnoza.sh n2s-nazwa; do
   printf 'Pobieram %s...\n' "$FILE"
   curl -fLsS --connect-timeout 15 --max-time 60 "$REPO/$FILE" -o "$TARGET/$FILE.new"
 done
@@ -17,17 +17,19 @@ node --check < "$TARGET/n2s-video.js.new"
 node --check < "$TARGET/app.js.new"
 bash -n "$TARGET/n2s.new"
 bash -n "$TARGET/n2s-ports.sh.new"
+bash -n "$TARGET/n2s-diagnoza.sh.new"
 bash -n "$TARGET/n2s-nazwa.new"
-for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css app.html app.js app.css n2s n2s-ports.sh n2s-nazwa; do
+for FILE in n2s-overlay.js n2s-media.js n2s-video.js n2s-video.css app.html app.js app.css n2s n2s-ports.sh n2s-diagnoza.sh n2s-nazwa; do
   mv "$TARGET/$FILE.new" "$TARGET/$FILE"
 done
 # Remove legacy themes from existing Termux installations after new files validate.
 rm -f "$TARGET/n2s-themes.js" "$TARGET/n2s-themes.css"
 rm -f "$TARGET/themes/amoled.svg" "$TARGET/themes/catalyst.svg" "$TARGET/themes/pro.svg"
 rmdir "$TARGET/themes" 2>/dev/null || true
-chmod 700 "$TARGET/n2s-overlay.js" "$TARGET/n2s" "$TARGET/n2s-nazwa"
+chmod 700 "$TARGET/n2s-overlay.js" "$TARGET/n2s" "$TARGET/n2s-diagnoza.sh" "$TARGET/n2s-nazwa"
 chmod 600 "$TARGET/n2s-media.js" "$TARGET/n2s-video.js" "$TARGET/n2s-video.css"
 ln -sf "$TARGET/n2s" "$PREFIX/bin/n2s"
+ln -sf "$TARGET/n2s-diagnoza.sh" "$PREFIX/bin/n2s-diagnoza"
 ln -sf "$TARGET/n2s-nazwa" "$PREFIX/bin/n2s-nazwa"
 if [ ! -s "$HOME/.config/n2s-overlay/name.txt" ]; then
   printf '%s\n' 'N2S CLOUD' > "$HOME/.config/n2s-overlay/name.txt"
@@ -39,6 +41,7 @@ printf 'N2S CLOUD automatycznie wybierze drugi, wolny port. Zatrzymaj stary tune
 printf 'Po restarcie nakladki opcja Wybierz odtwarzacz pojawi sie przy filmach.\n'
 printf 'Nowy interfejs: https://jargielo.gh.srv.us/n2s_cloude\n'
 printf 'Porty: automatyczny wybor 8080/8081. Przy WebDAV 8080, N2S CLOUD bedzie na 8081.\n'
+printf 'Diagnostyka: n2s-diagnoza\n'
 printf 'Uruchamianie: n2s\n'
 printf 'Zmiana nazwy: n2s-nazwa "MOJA CHMURA"\n\n'
 exec "$PREFIX/bin/n2s"
