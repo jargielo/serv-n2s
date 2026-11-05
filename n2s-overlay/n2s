@@ -6,6 +6,10 @@ OVERLAY=''
 PORT_HELPER="$HOME/.local/share/n2s-overlay/n2s-ports.sh"
 KEY="$HOME/.ssh/id_ed25519"
 PROXY_JS="$HOME/.local/share/n2s-overlay/n2s-overlay.js"
+LOG_DIR="$HOME/.local/state/n2s-overlay"
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+chmod 700 "$LOG_DIR" 2>/dev/null || true
+SSH_LOG="$LOG_DIR/ssh.log"
 PROXY_PID=""
 TUNNEL_PID=""
 
@@ -52,7 +56,7 @@ PROXY_PID=$!
 sleep 1
 if ! kill -0 "$PROXY_PID" 2>/dev/null ||
    [ "$(curl -s --max-time 2 "http://127.0.0.1:$OVERLAY/_n2s_overlay_2026/health")" != 'N2S OK' ]; then
-  echo 'Nakładka nie uruchomiła się. Sprawdź, czy port $OVERLAY jest wolny.'
+  echo "Nakładka nie uruchomiła się. Sprawdź, czy port $OVERLAY jest wolny."
   exit 1
 fi
 
@@ -64,60 +68,114 @@ echo 'Publiczny adres: https://jargielo.gh.srv.us/n2s_cloude'
 echo 'Zatrzymanie: CTRL+C'
 echo 'Odnowienie tunelu: co 60 minut.'
 
+# Remote availability is not guaranteed by a live SSH process alone.
+# srv.us can drop a tunnel mapping while the process still appears alive.
+# Check the actual public health endpoint and reconnect after sustained failure.
+public_health() {
+  curl -fsS --connect-timeout 4 --max-time 8 \
+    'https://jargielo.gh.srv.us/_n2s_overlay_2026/health' 2>/dev/null || true
+}
+
+show_tunnel_error() {
+  echo 'Tunel SSH nie jest dostepny. Ostatnie komunikaty:'
+  if [ -s "$SSH_LOG" ]; then
+    tail -n 12 "$SSH_LOG"
+    if grep -qi 'Permission denied (publickey)' "$SSH_LOG"; then
+      echo 'BLAD SSH: srv.us odrzuca klucz. Sprawdz logowanie i klucz GitHub.'
+    fi
+    if grep -Eqi 'Could not resolve hostname|Name or service not known' "$SSH_LOG"; then
+      echo 'BLAD SIECI: nie mozna odnalezc serwera srv.us (DNS).'
+    fi
+    if grep -Eqi 'Connection timed out|Network is unreachable|No route to host' "$SSH_LOG"; then
+      echo 'BLAD SIECI: SSH do srv.us nie odpowiada. Sprawdz dostep do internetu.'
+    fi
+  else
+    echo 'Brak informacji od SSH. Mozliwe rozlaczenie lub blokada sieci.'
+  fi
+  echo "Diagnostyka SSH: $SSH_LOG"
+}
+
 while true; do
+  if ! kill -0 "$PROXY_PID" 2>/dev/null; then
+    echo 'BLAD: proces N2S CLOUD zostal zatrzymany. Koncze tunel, aby nie udostepniac niedostepnego serwera.'
+    exit 1
+  fi
   if ! n2s_has_auth "$PORT"; then
-    echo 'Oczekuję na serwer z aktywnym hasłem (15 s)...'
+    echo 'WebDAV nie jest gotowy lub nie wymaga hasla. Tunel pozostaje zamkniety.'
+    echo 'Ponowna kontrola za 15 sekund...'
     sleep 15
     continue
   fi
-  echo 'Hasło zweryfikowane (HTTP 401). Łączę tunel z nakładką...'
+  echo "Haslo WebDAV zweryfikowane (HTTP 401). Otwieram SSH do srv.us -> 127.0.0.1:$OVERLAY."
+  : > "$SSH_LOG"
+  chmod 600 "$SSH_LOG" 2>/dev/null || true
   ssh -T -i "$KEY" \
     -o IdentitiesOnly=yes -o BatchMode=yes \
     -o StrictHostKeyChecking=accept-new \
+    -o ConnectionAttempts=1 \
     -o ConnectTimeout=15 -o ServerAliveInterval=30 \
     -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes \
-    -R "1:127.0.0.1:$OVERLAY" jargielo@srv.us &
+    -R "1:127.0.0.1:$OVERLAY" jargielo@srv.us >"$SSH_LOG" 2>&1 &
   TUNNEL_PID=$!
   STARTED_AT=$SECONDS
-  # If another Termux session tunnels directly to WebDAV, the old
-  # interface will respond with 404 on /n2s_cloude. Report this explicitly.
-  sleep 3
-  PUBLIC_HEALTH="$(curl -fsS --connect-timeout 4 --max-time 8 \
-    'https://jargielo.gh.srv.us/_n2s_overlay_2026/health' 2>/dev/null || true)"
-  if [ "$PUBLIC_HEALTH" != 'N2S OK' ]; then
-    echo 'UWAGA: Publiczny adres NIE wskazuje na nakladke N2S.'
-    echo 'Mozliwy drugi tunel do WebDAV lub nieaktywne mapowanie srv.us.'
-    echo 'Zatrzymaj stary serwer/ssh -R w innej sesji Termuxa.'
-    echo "Lokalna nakladka: http://127.0.0.1:$OVERLAY/n2s_cloude"
-  else
-    echo 'OK: Publiczny tunel kieruje do N2S CLOUD.'
-    # Probe the actual browser landing route, not only the health endpoint.
-    PUBLIC_REDIRECT="$(curl -sS -o /dev/null -D - --connect-timeout 4 --max-time 8 \
-      -H 'Accept: text/html' 'https://jargielo.gh.srv.us/' 2>/dev/null \
-      | tr -d '\r' | grep -i '^location:' | tail -n 1 | sed -E 's/^[Ll]ocation:[[:space:]]*//' || true)"
-    if [ "$PUBLIC_REDIRECT" != '/n2s_cloude#' ]; then
-      echo "UWAGA: Strona glowna nie przekierowuje prawidlowo (Location: ${PUBLIC_REDIRECT:-brak})."
-      echo 'Sprawdz, czy nie dziala starsza nakladka lub drugi tunel.'
-    else
-      echo 'OK: Adres glowny kieruje do /n2s_cloude.'
+  CONNECTED=0
+
+  # Some mobile networks need more than 3 seconds to establish the route.
+  for ATTEMPT in 1 2 3 4 5 6 7 8 9 10; do
+    if ! kill -0 "$TUNNEL_PID" 2>/dev/null; then break; fi
+    if [ "$(public_health)" = 'N2S OK' ]; then
+      CONNECTED=1
+      break
     fi
-    echo 'Otworz: https://jargielo.gh.srv.us/n2s_cloude'
+    sleep 2
+  done
+  if [ "$CONNECTED" -eq 1 ]; then
+    echo 'OK: https://jargielo.gh.srv.us/n2s_cloude'
+    echo 'Tunel aktywny. Sprawdzam polaczenie co 30 sekund.'
+  else
+    echo 'UWAGA: srv.us zwraca No tunnel available lub brak odpowiedzi.'
+    echo "N2S lokalnie: http://127.0.0.1:$OVERLAY/n2s_cloude"
+    show_tunnel_error
+    if kill -0 "$TUNNEL_PID" 2>/dev/null; then
+      echo 'SSH dziala, ale nie ma potwierdzenia publicznego mapowania.'
+      echo 'Mozliwa konkurencyjna sesja SSH -R w innym oknie Termuxa.'
+    fi
   fi
+
+  FAILURES=0
   while kill -0 "$TUNNEL_PID" 2>/dev/null; do
-    sleep 15
+    sleep 30
+    if ! kill -0 "$PROXY_PID" 2>/dev/null; then
+      echo 'N2S lokalnie zostal zamkniety. Zatrzymuje tunel SSH.'
+      kill "$TUNNEL_PID" 2>/dev/null || true
+      break
+    fi
     if [ $((SECONDS - STARTED_AT)) -ge 3600 ]; then
-      echo 'Minęło 60 minut. Odnawiam tunel...'
+      echo 'Minelo 60 minut. Odnawiam tunel SSH.'
       kill "$TUNNEL_PID" 2>/dev/null || true
       break
     fi
     if ! n2s_has_auth "$PORT"; then
-      echo 'Zatrzymuję tunel: ochrona hasłem jest niedostępna.'
+      echo 'Ochrona WebDAV jest niedostepna. Zatrzymuje publiczny tunel.'
       kill "$TUNNEL_PID" 2>/dev/null || true
       break
+    fi
+    if [ "$(public_health)" = 'N2S OK' ]; then
+      FAILURES=0
+    else
+      FAILURES=$((FAILURES+1))
+      echo "Brak publicznego tunelu: proba $FAILURES/3."
+      if [ "$FAILURES" -ge 3 ]; then
+        echo 'Ponawiam SSH, poniewaz publiczny adres nie odpowiada.'
+        kill "$TUNNEL_PID" 2>/dev/null || true
+        break
+      fi
     fi
   done
   wait "$TUNNEL_PID" 2>/dev/null || true
   TUNNEL_PID=""
-  echo 'Ponawiam połączenie za 5 sekund...'
+  if ! kill -0 "$PROXY_PID" 2>/dev/null; then exit 1; fi
+  if [ "$CONNECTED" -eq 0 ]; then show_tunnel_error; fi
+  echo 'Ponawiam polaczenie za 5 sekund...'
   sleep 5
 done
