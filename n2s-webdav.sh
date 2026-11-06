@@ -7,18 +7,18 @@ REPO='https://raw.githubusercontent.com/jargielo/serv-n2s/main/n2s-overlay'
 URL='https://jargielo.gh.srv.us'
 BASE="$HOME/.local/share/n2s-overlay"
 SSH_KEY="$HOME/.ssh/id_ed25519"
-CMD="\${1:-install}"
+CMD="${1:-install}"
 
 say() { printf '\n[N2S WebDAV] %s\n' "$*"; }
 fail() { printf '\n[N2S WebDAV] BŁĄD: %s\n' "$*" >&2; exit 1; }
 require_termux() {
-  [ -n "\${PREFIX:-}" ] && [ -x "$PREFIX/bin/pkg" ] || fail 'Ten skrypt uruchom w Termux na Androidzie.'
+  [ -n "${PREFIX:-}" ] && [ -x "$PREFIX/bin/pkg" ] || fail 'Ten skrypt uruchom w Termux na Androidzie.'
 }
 http_status() {
   local port="$1" method="$2"
   curl --noproxy '*' -sS -o /dev/null -w '%{http_code}' \
     --connect-timeout 2 --max-time 4 -X "$method" \
-    -H 'Depth: 0' "http://127.0.0.1:\${port}/" 2>/dev/null || true
+    -H 'Depth: 0' "http://127.0.0.1:${port}/" 2>/dev/null || true
 }
 local_health() {
   curl --noproxy '*' -fsS --connect-timeout 2 --max-time 4 \
@@ -48,7 +48,7 @@ status() {
   if [ "$public_code" = 200 ] && [ "$public_body" = 'N2S OK' ]; then
     say "ONLINE: $URL/n2s_cloude"
   else
-    say "Publiczny tunel niepotwierdzony (HTTP \${public_code:-000})."
+    say "Publiczny tunel niepotwierdzony (HTTP ${public_code:-000})."
     if [ "$public_code" = 503 ]; then
       say 'srv.us zgłasza brak aktywnego tunelu (No tunnel available).'
     fi
